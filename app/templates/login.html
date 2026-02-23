@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Login - Digest{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="card">
+        <h2 style="margin-bottom: 1.25rem;">Login</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

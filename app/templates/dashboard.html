@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Digest{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h2>Dashboard</h2>
+    <form method="POST" action="{{ url_for('main.run_pipelines') }}" style="display:inline;">
+        <button type="submit" class="btn btn-outline btn-sm">Run pipelines now</button>
+    </form>
+</div>
+
+<div class="cat-grid">
+{% for item in digest %}
+    <div class="card">
+        <h3>
+            <a href="{{ url_for('main.category_detail', slug=item.category.slug) }}">
+                {{ item.category.name }}
+            </a>
+            <span class="badge {% if item.unread_count == 0 %}zero{% endif %}">
+                {{ item.unread_count }}
+            </span>
+        </h3>
+        <p class="text-muted text-sm">{{ item.category.description }}</p>
+
+        {% if item.alerts %}
+        <div class="mt-2">
+            {% for alert in item.alerts[:5] %}
+            {% set c = alert.get_content() %}
+            <div class="alert-item">
+                <div>
+                    {% if c.type == 'music_release' %}
+                        <strong>{{ c.album }}</strong> by {{ c.artist }}
+                        {% if c.get('release_type') %}
+                            <span class="meta">({{ c.release_type }})</span>
+                        {% endif %}
+                    {% elif c.type == 'tour_date' %}
+                        <strong>{{ c.artist }}</strong> at {{ c.venue }}
+                        {% if c.city or c.country %}
+                            <span class="meta">— {{ c.city }}{% if c.city and c.country %}, {% endif %}{{ c.country }}</span>
+                        {% endif %}
+                    {% elif c.type == 'book_release' %}
+                        <strong>{{ c.title }}</strong> by {{ c.author }}
+                    {% endif %}
+                </div>
+                <form method="POST" action="{{ url_for('main.mark_seen', alert_id=alert.id) }}">
+                    <button type="submit" class="btn btn-outline btn-sm">Dismiss</button>
+                </form>
+            </div>
+            {% endfor %}
+
+            {% if item.alerts|length > 5 %}
+            <a href="{{ url_for('main.category_detail', slug=item.category.slug) }}" class="text-sm">
+                View all {{ item.unread_count }} alerts &rarr;
+            </a>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-sm text-muted mt-2">No new alerts.</p>
+        {% endif %}
+    </div>
+{% endfor %}
+</div>
+{% endblock %}

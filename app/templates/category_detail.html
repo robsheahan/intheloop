@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ category.name }} - Digest{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h2>{{ category.name }} <span class="badge {% if alerts|length == 0 %}zero{% endif %}">{{ alerts|length }}</span></h2>
+    {% if alerts %}
+    <form method="POST" action="{{ url_for('main.mark_all_seen', slug=category.slug) }}">
+        <button type="submit" class="btn btn-outline btn-sm">Mark all seen</button>
+    </form>
+    {% endif %}
+</div>
+
+{% if alerts %}
+<div class="card">
+    {% for alert in alerts %}
+    {% set c = alert.get_content() %}
+    <div class="alert-item">
+        <div>
+            {% if c.type == 'music_release' %}
+                <strong>{{ c.album }}</strong> by {{ c.artist }}
+                {% if c.get('release_type') %}
+                    <span class="meta">({{ c.release_type }})</span>
+                {% endif %}
+                {% if c.release_date %}
+                <br><span class="meta">Released: {{ c.release_date[:10] }}</span>
+                {% endif %}
+                {% if c.link %}
+                <br><a href="{{ c.link }}" target="_blank" class="text-sm">View on iTunes &rarr;</a>
+                {% endif %}
+            {% elif c.type == 'tour_date' %}
+                <strong>{{ c.artist }}</strong> at {{ c.venue }}
+                <br><span class="meta">{{ c.city }}{% if c.country %}, {{ c.country }}{% endif %} &mdash; {{ c.date[:10] if c.date else 'TBA' }}</span>
+                {% if c.ticket_link %}
+                <br><a href="{{ c.ticket_link }}" target="_blank" class="text-sm">Tickets &rarr;</a>
+                {% endif %}
+            {% elif c.type == 'book_release' %}
+                <strong>{{ c.title }}</strong> by {{ c.author }}
+                {% if c.publish_date %}
+                <br><span class="meta">Published: {{ c.publish_date }}</span>
+                {% endif %}
+                {% if c.link %}
+                <br><a href="{{ c.link }}" target="_blank" class="text-sm">View on Open Library &rarr;</a>
+                {% endif %}
+            {% endif %}
+        </div>
+        <form method="POST" action="{{ url_for('main.mark_seen', alert_id=alert.id) }}">
+            <button type="submit" class="btn btn-outline btn-sm">Dismiss</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <p class="text-muted">No unread alerts in this category.</p>
+</div>
+{% endif %}
+{% endblock %}

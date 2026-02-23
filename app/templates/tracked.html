@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Tracked Entities - Digest{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1rem;">Tracked Entities</h2>
+
+{% for cat in categories %}
+<div class="card">
+    <h3>{{ cat.name }}</h3>
+    <p class="text-muted text-sm mb-2">{{ cat.description }}</p>
+
+    {% set entities = entities_by_cat.get(cat.slug, []) %}
+    {% if entities %}
+    <ul class="entity-list">
+        {% for entity in entities %}
+        {% set meta = entity.get_metadata() %}
+        <li>
+            <span>
+                {{ entity.entity_name }}
+                {% if cat.slug == 'music' and meta.get('release_type') and meta.release_type != 'all' %}
+                    <span class="meta"> — {{ meta.release_type | capitalize }}s only</span>
+                {% endif %}
+                {% if cat.slug == 'tours' and (meta.get('city') or meta.get('country')) %}
+                    <span class="meta"> — {{ meta.get('city', '') }}{% if meta.get('city') and meta.get('country') %}, {% endif %}{{ meta.get('country', '') }}</span>
+                {% endif %}
+            </span>
+            <form method="POST" action="{{ url_for('main.remove_entity', entity_id=entity.id) }}">
+                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm text-muted">No entities tracked yet.</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('main.add_entity') }}" class="form-inline mt-2">
+        <input type="hidden" name="category_slug" value="{{ cat.slug }}">
+
+        {% if cat.slug == 'music' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Artist name..." required>
+            </div>
+            <div class="form-group" style="flex: 0 0 auto; min-width: 140px;">
+                <select name="release_type">
+                    <option value="all">All releases</option>
+                    <option value="album">Albums only</option>
+                    <option value="single">Singles only</option>
+                </select>
+            </div>
+        {% elif cat.slug == 'tours' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Artist name..." required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="city" placeholder="City (optional)">
+            </div>
+            <div class="form-group">
+                <input type="text" name="country" placeholder="Country (optional)">
+            </div>
+        {% elif cat.slug == 'books' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Author name..." required>
+            </div>
+        {% else %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Add {{ cat.name | lower }} name..." required>
+            </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary btn-sm">Add</button>
+    </form>
+</div>
+{% endfor %}
+{% endblock %}

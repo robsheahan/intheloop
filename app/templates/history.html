@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Alert History - Digest{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 1rem;">Alert History</h2>
+
+{% if alerts.items %}
+<div class="card">
+    {% for alert in alerts.items %}
+    {% set c = alert.get_content() %}
+    <div class="alert-item">
+        <div>
+            {% if c.type == 'music_release' %}
+                <strong>{{ c.album }}</strong> by {{ c.artist }}
+                {% if c.link %}
+                &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">iTunes</a>
+                {% endif %}
+            {% elif c.type == 'tour_date' %}
+                <strong>{{ c.artist }}</strong> at {{ c.venue }}, {{ c.city }}
+                {% if c.ticket_link %}
+                &mdash; <a href="{{ c.ticket_link }}" target="_blank" class="text-sm">Tickets</a>
+                {% endif %}
+            {% elif c.type == 'book_release' %}
+                <strong>{{ c.title }}</strong> by {{ c.author }}
+                {% if c.link %}
+                &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">Open Library</a>
+                {% endif %}
+            {% endif %}
+            <br>
+            <span class="meta">
+                {{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}
+                {% if alert.seen_at %} &mdash; Seen{% else %} &mdash; <strong>Unread</strong>{% endif %}
+            </span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if alerts.pages > 1 %}
+<div class="pagination">
+    {% if alerts.has_prev %}
+    <a href="{{ url_for('main.alert_history', page=alerts.prev_num) }}" class="btn btn-outline btn-sm">&laquo; Prev</a>
+    {% endif %}
+    <span class="text-muted text-sm" style="padding: 0.3rem 0.5rem;">Page {{ alerts.page }} of {{ alerts.pages }}</span>
+    {% if alerts.has_next %}
+    <a href="{{ url_for('main.alert_history', page=alerts.next_num) }}" class="btn btn-outline btn-sm">Next &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+    <p class="text-muted">No alert history yet. Run the pipelines to start receiving alerts.</p>
+</div>
+{% endif %}
+{% endblock %}
