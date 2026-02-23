@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Tracked Entities - Digest{% endblock %}
+{% block title %}Tracked Entities - In The Loop{% endblock %}
 
 {% block content %}
 <h2 style="margin-bottom: 1rem;">Tracked Entities</h2>
 
 {% for cat in categories %}
-<div class="card">
+<div class="card" data-category="{{ cat.slug }}">
     <h3>{{ cat.name }}</h3>
     <p class="text-muted text-sm mb-2">{{ cat.description }}</p>
 
@@ -22,6 +22,24 @@
                 {% endif %}
                 {% if cat.slug == 'tours' and (meta.get('city') or meta.get('country')) %}
                     <span class="meta"> — {{ meta.get('city', '') }}{% if meta.get('city') and meta.get('country') %}, {% endif %}{{ meta.get('country', '') }}</span>
+                {% endif %}
+                {% if cat.slug == 'crypto' and meta.get('target_price') %}
+                    <span class="meta"> — Alert {{ meta.get('direction', 'above') }} ${{ meta.target_price }}</span>
+                {% endif %}
+                {% if cat.slug == 'stocks' and meta.get('target_price') %}
+                    <span class="meta"> — Alert {{ meta.get('direction', 'above') }} ${{ meta.target_price }}</span>
+                {% endif %}
+                {% if cat.slug == 'movies' and meta.get('track_type') %}
+                    <span class="meta"> — Tracking as {{ meta.track_type }}</span>
+                {% endif %}
+                {% if cat.slug == 'weather' and meta.get('alert_type') %}
+                    <span class="meta"> — {{ meta.alert_type | replace('_', ' ') | capitalize }} {{ meta.get('threshold', '') }}</span>
+                {% endif %}
+                {% if cat.slug == 'reddit' and meta.get('subreddit') %}
+                    <span class="meta"> — r/{{ meta.subreddit }}</span>
+                {% endif %}
+                {% if cat.slug == 'currency' and meta.get('target_rate') %}
+                    <span class="meta"> — Alert {{ meta.get('direction', 'above') }} {{ meta.target_rate }}</span>
                 {% endif %}
             </span>
             <form method="POST" action="{{ url_for('main.remove_entity', entity_id=entity.id) }}">
@@ -61,6 +79,97 @@
         {% elif cat.slug == 'books' %}
             <div class="form-group">
                 <input type="text" name="entity_name" placeholder="Author name..." required>
+            </div>
+        {% elif cat.slug == 'crypto' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Instrument (e.g. BTC_USDT)..." required>
+            </div>
+            <div class="form-group">
+                <input type="number" name="target_price" step="any" placeholder="Target price..." required>
+            </div>
+            <div class="form-group" style="flex: 0 0 auto; min-width: 120px;">
+                <select name="direction">
+                    <option value="above">Above</option>
+                    <option value="below">Below</option>
+                </select>
+            </div>
+        {% elif cat.slug == 'stocks' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Ticker (e.g. AAPL)..." required>
+            </div>
+            <div class="form-group">
+                <input type="number" name="target_price" step="any" placeholder="Target price..." required>
+            </div>
+            <div class="form-group" style="flex: 0 0 auto; min-width: 120px;">
+                <select name="direction">
+                    <option value="above">Above</option>
+                    <option value="below">Below</option>
+                </select>
+            </div>
+        {% elif cat.slug == 'movies' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Person name (e.g. Tom Hanks)..." required>
+            </div>
+            <div class="form-group" style="flex: 0 0 auto; min-width: 140px;">
+                <select name="track_type">
+                    <option value="actor">As actor</option>
+                    <option value="director">As director</option>
+                </select>
+            </div>
+        {% elif cat.slug == 'news' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Keyword (e.g. artificial intelligence)..." required>
+            </div>
+        {% elif cat.slug == 'github' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Repo (e.g. facebook/react)..." required>
+            </div>
+        {% elif cat.slug == 'steam' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Game name (e.g. Counter-Strike)..." required>
+            </div>
+        {% elif cat.slug == 'podcasts' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Podcast name (e.g. The Daily)..." required>
+            </div>
+        {% elif cat.slug == 'weather' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="City name (e.g. Sydney)..." required>
+            </div>
+            <div class="form-group" style="flex: 0 0 auto; min-width: 160px;">
+                <select name="alert_type">
+                    <option value="temp_above">Temp above</option>
+                    <option value="temp_below">Temp below</option>
+                    <option value="rain_above">Rain above</option>
+                    <option value="wind_above">Wind above</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="number" name="threshold" step="any" placeholder="Threshold..." required>
+            </div>
+        {% elif cat.slug == 'reddit' %}
+            <div class="form-group">
+                <input type="text" name="entity_name" placeholder="Keyword (e.g. python)..." required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="subreddit" placeholder="Subreddit (optional)">
+            </div>
+        {% elif cat.slug == 'currency' %}
+            <input type="hidden" name="entity_name" value="placeholder">
+            <div class="form-group">
+                <input type="text" name="from_currency" placeholder="From (e.g. USD)..." required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="to_currency" placeholder="To (e.g. AUD)..." required>
+            </div>
+            <div class="form-group">
+                <input type="number" name="target_rate" step="any" placeholder="Target rate..." required>
+            </div>
+            <div class="form-group" style="flex: 0 0 auto; min-width: 120px;">
+                <select name="direction">
+                    <option value="above">Above</option>
+                    <option value="below">Below</option>
+                </select>
             </div>
         {% else %}
             <div class="form-group">

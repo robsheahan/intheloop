@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Alert History - Digest{% endblock %}
+{% block title %}Alert History - In The Loop{% endblock %}
 
 {% block content %}
 <h2 style="margin-bottom: 1rem;">Alert History</h2>
@@ -25,6 +25,48 @@
                 {% if c.link %}
                 &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">Open Library</a>
                 {% endif %}
+            {% elif c.type == 'crypto_alert' %}
+                <strong>{{ c.instrument }}</strong> {{ c.direction }} ${{ c.target_price }}
+                <span class="meta">(now ${{ c.current_price }})</span>
+            {% elif c.type == 'stock_alert' %}
+                <strong>{{ c.symbol }}</strong> {{ c.direction }} ${{ c.target_price }}
+                <span class="meta">(now ${{ c.current_price }})</span>
+            {% elif c.type == 'movie_release' %}
+                <strong>{{ c.title }}</strong> — {{ c.person }}
+                {% if c.link %}
+                &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">TMDB</a>
+                {% endif %}
+            {% elif c.type == 'news_article' %}
+                <strong>{{ c.title }}</strong>
+                {% if c.link %}
+                &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">Read</a>
+                {% endif %}
+            {% elif c.type == 'github_release' %}
+                <strong>{{ c.repo }}</strong> {{ c.tag }}
+                {% if c.link %}
+                &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">GitHub</a>
+                {% endif %}
+            {% elif c.type == 'steam_sale' %}
+                <strong>{{ c.game }}</strong> {{ c.discount_percent }}% off
+                {% if c.link %}
+                &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">Steam</a>
+                {% endif %}
+            {% elif c.type == 'podcast_episode' %}
+                <strong>{{ c.episode_title }}</strong> — {{ c.podcast }}
+                {% if c.link %}
+                &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">Listen</a>
+                {% endif %}
+            {% elif c.type == 'weather_alert' %}
+                <strong>{{ c.city }}</strong> {{ c.alert_type | replace('_', ' ') }}
+                <span class="meta">({{ c.current_value }})</span>
+            {% elif c.type == 'reddit_post' %}
+                <strong>{{ c.title[:60] }}{% if c.title|length > 60 %}...{% endif %}</strong> — r/{{ c.subreddit }}
+                {% if c.link %}
+                &mdash; <a href="{{ c.link }}" target="_blank" class="text-sm">Reddit</a>
+                {% endif %}
+            {% elif c.type == 'currency_alert' %}
+                <strong>{{ c.pair }}</strong> {{ c.direction }} {{ c.target_rate }}
+                <span class="meta">(now {{ c.current_rate }})</span>
             {% endif %}
             <br>
             <span class="meta">

@@ -8,6 +8,16 @@ from app.models import db, User, Category, TrackedEntity
 from app.pipelines.music import check_releases
 from app.pipelines.tours import check_tours
 from app.pipelines.books import check_books
+from app.pipelines.crypto import check_crypto
+from app.pipelines.stocks import check_stocks
+from app.pipelines.movies import check_movies
+from app.pipelines.news import check_news
+from app.pipelines.github import check_github
+from app.pipelines.steam import check_steam
+from app.pipelines.podcasts import check_podcasts
+from app.pipelines.weather import check_weather
+from app.pipelines.reddit import check_reddit
+from app.pipelines.currency import check_currency
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +27,16 @@ PIPELINE_MAP = {
     "music": check_releases,
     "tours": check_tours,
     "books": check_books,
+    "crypto": check_crypto,
+    "stocks": check_stocks,
+    "movies": check_movies,
+    "news": check_news,
+    "github": check_github,
+    "steam": check_steam,
+    "podcasts": check_podcasts,
+    "weather": check_weather,
+    "reddit": check_reddit,
+    "currency": check_currency,
 }
 
 

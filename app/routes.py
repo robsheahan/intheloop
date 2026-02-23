@@ -133,6 +133,13 @@ def add_entity():
     category_slug = request.form.get("category_slug", "").strip()
     entity_name = request.form.get("entity_name", "").strip()
 
+    # Currency: construct entity_name from from/to fields
+    if category_slug == "currency":
+        from_cur = request.form.get("from_currency", "").strip().upper()
+        to_cur = request.form.get("to_currency", "").strip().upper()
+        if from_cur and to_cur:
+            entity_name = f"{from_cur}/{to_cur}"
+
     if not category_slug or not entity_name:
         flash("Category and name are required.", "error")
         return redirect(url_for("main.tracked_entities"))
@@ -161,6 +168,42 @@ def add_entity():
             metadata["city"] = city
         if country:
             metadata["country"] = country
+    elif category_slug == "crypto":
+        target_price = request.form.get("target_price", "").strip()
+        direction = request.form.get("direction", "above").strip()
+        if target_price:
+            metadata["target_price"] = target_price
+        if direction in ("above", "below"):
+            metadata["direction"] = direction
+    elif category_slug == "stocks":
+        target_price = request.form.get("target_price", "").strip()
+        direction = request.form.get("direction", "above").strip()
+        if target_price:
+            metadata["target_price"] = target_price
+        if direction in ("above", "below"):
+            metadata["direction"] = direction
+    elif category_slug == "movies":
+        track_type = request.form.get("track_type", "actor").strip()
+        if track_type in ("actor", "director"):
+            metadata["track_type"] = track_type
+    elif category_slug == "weather":
+        alert_type = request.form.get("alert_type", "temp_above").strip()
+        threshold = request.form.get("threshold", "").strip()
+        if alert_type in ("temp_above", "temp_below", "rain_above", "wind_above"):
+            metadata["alert_type"] = alert_type
+        if threshold:
+            metadata["threshold"] = threshold
+    elif category_slug == "reddit":
+        subreddit = request.form.get("subreddit", "").strip()
+        if subreddit:
+            metadata["subreddit"] = subreddit
+    elif category_slug == "currency":
+        target_rate = request.form.get("target_rate", "").strip()
+        direction = request.form.get("direction", "above").strip()
+        if target_rate:
+            metadata["target_rate"] = target_rate
+        if direction in ("above", "below"):
+            metadata["direction"] = direction
 
     entity = TrackedEntity(
         user_id=current_user.id,

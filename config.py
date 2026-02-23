@@ -13,3 +13,6 @@ class Config:
     # Run pipelines once daily at 7am by default
     PIPELINE_HOUR = int(os.environ.get("PIPELINE_HOUR", "7"))
     PIPELINE_MINUTE = int(os.environ.get("PIPELINE_MINUTE", "0"))
+    # Optional API keys (pipelines skip gracefully if missing)
+    ALPHA_VANTAGE_KEY = os.environ.get("ALPHA_VANTAGE_KEY", "")
+    TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "")
