@@ -91,8 +91,10 @@ def seed_database():
         logging.info("Database seeded with admin user and example entities.")
 
 
+# Always run seed + ensure on import (needed for gunicorn)
+seed_database()
+ensure_categories()
+init_scheduler(app)
+
 if __name__ == "__main__":
-    seed_database()
-    ensure_categories()
-    init_scheduler(app)
     app.run(debug=True, use_reloader=False, host="0.0.0.0", port=5000)
