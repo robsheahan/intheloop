@@ -34,7 +34,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 bg-white border-b border-sidebar-border">
         <Link href="/dashboard" className="flex justify-center">
           <Image
             src="/intheloopnew.svg"
