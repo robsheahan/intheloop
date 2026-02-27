@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { getAllPipelineSlugs, getPipeline } from '@/lib/pipelines';
 import { PipelineEntity } from '@/lib/pipelines/types';
+import { sendDigestEmails } from '@/lib/email/send-digest';
 
 export async function POST(request: NextRequest) {
   // Auth: either cron secret or authenticated user
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create pipeline run' }, { status: 500 });
   }
 
+  const runStartedAt = new Date().toISOString();
   const summary: Record<string, { total: number; new: number; errors: string[] }> = {};
 
   try {
@@ -117,7 +119,20 @@ export async function POST(request: NextRequest) {
       .update({ status: 'completed', completed_at: new Date().toISOString(), summary })
       .eq('id', run.id);
 
-    return NextResponse.json({ success: true, run_id: run.id, summary });
+    // Send digest emails if there were any new alerts
+    const totalNew = Object.values(summary).reduce((sum, s) => sum + s.new, 0);
+    let emailResult = { sent: 0, skipped: 0, errors: [] as string[] };
+    if (totalNew > 0) {
+      try {
+        emailResult = await sendDigestEmails(runStartedAt);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('Digest email error:', msg);
+        emailResult.errors.push(msg);
+      }
+    }
+
+    return NextResponse.json({ success: true, run_id: run.id, summary, emails: emailResult });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     await admin
