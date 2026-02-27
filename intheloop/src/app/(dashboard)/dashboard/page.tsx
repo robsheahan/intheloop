@@ -82,7 +82,7 @@ export default function DashboardPage() {
             Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}.
           </p>
         </div>
-        <Button onClick={handleRunPipelines} disabled={isRunning} size="sm" className="bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-shadow">
+        <Button onClick={handleRunPipelines} disabled={isRunning} size="sm" className="bg-[#ff751f] hover:bg-[#e5681c] text-white shadow-md hover:shadow-lg transition-all">
           <RefreshCw className={`h-4 w-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
           {isRunning ? 'Running...' : 'New Events'}
         </Button>
@@ -137,7 +137,7 @@ export default function DashboardPage() {
             const catAlerts = (alertsByCategory[cat.slug] || []).slice(0, 3);
 
             return (
-              <Card key={cat.id}>
+              <Card key={cat.id} className="shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <Link href={`/category/${cat.slug}`}>
                     <CardTitle className="flex items-center justify-between text-base">
@@ -146,7 +146,7 @@ export default function DashboardPage() {
                         {cat.name}
                       </span>
                       {count > 0 && (
-                        <Badge variant="secondary">{count}</Badge>
+                        <Badge className="bg-[#ff751f] text-white hover:bg-[#e5681c]">{count}</Badge>
                       )}
                     </CardTitle>
                   </Link>

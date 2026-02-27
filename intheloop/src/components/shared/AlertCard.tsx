@@ -36,7 +36,7 @@ export function AlertCard({ alert, onMarkSeen, showCategory = false }: Props) {
             {renderTitle(content, type)}
           </span>
           {isUnseen && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+            <Badge className="bg-[#ff751f] text-white text-[10px] px-1.5 py-0 shrink-0 hover:bg-[#e5681c]">
               New
             </Badge>
           )}

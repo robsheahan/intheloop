@@ -237,7 +237,7 @@ export default function CategoryPage() {
     <div className="space-y-6">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Dashboard
@@ -257,7 +257,6 @@ export default function CategoryPage() {
         </div>
         {unseenAlerts.length > 0 && (
           <Button
-            variant="outline"
             size="sm"
             onClick={handleMarkAllSeen}
             disabled={markAllSeen.isPending}

@@ -47,7 +47,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/60">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
@@ -66,14 +66,14 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4 space-y-2">
         {profile && (
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-xs text-sidebar-foreground/50 truncate">
             {profile.email}
           </p>
         )}
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start"
+          className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
           onClick={signOut}
         >
           <LogOut className="h-4 w-4 mr-2" />
