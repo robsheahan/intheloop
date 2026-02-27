@@ -31,8 +31,8 @@ export function EntityList({ entities }: Props) {
   }
 
   return (
-    <ul className="space-y-1">
-      {entities.map((entity) => (
+    <ul className="space-y-1 max-h-48 overflow-y-auto">
+      {[...entities].sort((a, b) => a.entity_name.localeCompare(b.entity_name)).map((entity) => (
         <li
           key={entity.id}
           className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-muted/50"
