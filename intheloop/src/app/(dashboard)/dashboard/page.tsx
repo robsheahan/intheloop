@@ -11,6 +11,7 @@ import { useTrackedEntities } from '@/lib/hooks/useTrackedEntities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
 import { AlertCard } from '@/components/shared/AlertCard';
 import { useMarkSeen } from '@/lib/hooks/useAlerts';
@@ -19,7 +20,7 @@ import { Category } from '@/types/database';
 export default function DashboardPage() {
   const { profile } = useAuth();
   const { data: categories, isLoading: catLoading } = useOrderedCategories();
-  const { data: entities } = useTrackedEntities();
+  const { data: entities, isLoading: entLoading } = useTrackedEntities();
   const { data: alerts } = useAlerts(undefined, true, 30);
   const { data: unseenCounts } = useUnseenCounts();
   const markSeen = useMarkSeen();
@@ -58,6 +59,23 @@ export default function DashboardPage() {
     }
     return acc;
   }, {});
+
+  // Show skeletons only while categories + entities are loading (not alerts)
+  if (catLoading || entLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-40" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Only show categories that have tracked entities
   const activeCategories = (categories || []).filter(
