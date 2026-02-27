@@ -11,7 +11,6 @@ import { useTrackedEntities } from '@/lib/hooks/useTrackedEntities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
 import { AlertCard } from '@/components/shared/AlertCard';
 import { useMarkSeen } from '@/lib/hooks/useAlerts';
@@ -21,7 +20,7 @@ export default function DashboardPage() {
   const { profile } = useAuth();
   const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: entities } = useTrackedEntities();
-  const { data: alerts, isLoading: alertsLoading } = useAlerts(undefined, true, 30);
+  const { data: alerts } = useAlerts(undefined, true, 30);
   const { data: unseenCounts } = useUnseenCounts();
   const markSeen = useMarkSeen();
   const [isRunning, setIsRunning] = useState(false);
@@ -59,19 +58,6 @@ export default function DashboardPage() {
     }
     return acc;
   }, {});
-
-  if (catLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-40" />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   // Only show categories that have tracked entities
   const activeCategories = (categories || []).filter(
@@ -129,9 +115,7 @@ export default function DashboardPage() {
                   </Link>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {alertsLoading ? (
-                    <Skeleton className="h-8 w-full" />
-                  ) : catAlerts.length > 0 ? (
+                  {catAlerts.length > 0 ? (
                     catAlerts.map((a) => (
                       <AlertCard
                         key={a.id}
