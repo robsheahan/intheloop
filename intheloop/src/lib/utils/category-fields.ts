@@ -35,8 +35,7 @@ export const CATEGORY_FORM_CONFIGS: Record<string, CategoryFormConfig> = {
     entityLabel: 'Artist name',
     entityPlaceholder: 'e.g. Taylor Swift',
     fields: [
-      { name: 'city', label: 'City (optional)', type: 'autocomplete', placeholder: 'e.g. Melbourne', searchSlug: 'cities' },
-      { name: 'country', label: 'Country (optional)', type: 'text', placeholder: 'e.g. AU' },
+      { name: 'city', label: 'City', type: 'autocomplete', required: true, placeholder: 'e.g. Melbourne', searchSlug: 'cities' },
     ],
   },
   books: {

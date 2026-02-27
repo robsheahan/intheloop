@@ -30,6 +30,7 @@ export function AddEntityForm({ category, onSuccess }: Props) {
   const [entityName, setEntityName] = useState('');
   const [metadata, setMetadata] = useState<Record<string, string>>({});
   const [entitySelected, setEntitySelected] = useState(false);
+  const [fieldSelected, setFieldSelected] = useState<Record<string, boolean>>({});
   const addEntity = useAddTrackedEntity();
 
   if (!config) return null;
@@ -50,6 +51,10 @@ export function AddEntityForm({ category, onSuccess }: Props) {
         toast.error(`${field.label} is required`);
         return;
       }
+      if (field.type === 'autocomplete' && field.required && !fieldSelected[field.name]) {
+        toast.error(`Please select ${field.label.toLowerCase()} from the dropdown`);
+        return;
+      }
       if (val) {
         parsedMetadata[field.name] = field.type === 'number' ? parseFloat(val) : val;
       }
@@ -65,6 +70,7 @@ export function AddEntityForm({ category, onSuccess }: Props) {
       setEntityName('');
       setMetadata({});
       setEntitySelected(false);
+      setFieldSelected({});
       onSuccess?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add entity';
@@ -109,6 +115,10 @@ export function AddEntityForm({ category, onSuccess }: Props) {
               }
               placeholder={field.placeholder}
               categorySlug={field.searchSlug}
+              strict={field.required}
+              onSelectionChange={(selected) =>
+                setFieldSelected((prev) => ({ ...prev, [field.name]: selected }))
+              }
             />
           ) : field.type === 'select' ? (
             <select

@@ -8,17 +8,14 @@ export async function checkTours(ctx: PipelineContext): Promise<PipelineResult[]
 
   for (const entity of ctx.entities) {
     const filterCity = ((entity.entity_metadata.city as string) || '').toLowerCase();
-    const filterCountry = ((entity.entity_metadata.country as string) || '').toLowerCase();
 
     try {
       let items = await fetchEvents(entity.entity_name);
 
-      if (filterCity || filterCountry) {
-        items = items.filter((item) => {
-          if (filterCity && !item.city.toLowerCase().includes(filterCity)) return false;
-          if (filterCountry && !item.country.toLowerCase().includes(filterCountry)) return false;
-          return true;
-        });
+      if (filterCity) {
+        items = items.filter((item) =>
+          item.city.toLowerCase().includes(filterCity)
+        );
       }
 
       for (const item of items) {
