@@ -44,6 +44,13 @@ export interface EmailPreference {
   enabled: boolean;
 }
 
+export interface CategoryOrder {
+  id: string;
+  user_id: string;
+  category_id: string;
+  position: number;
+}
+
 export interface PipelineRun {
   id: string;
   triggered_by: string;

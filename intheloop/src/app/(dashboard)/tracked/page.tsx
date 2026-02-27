@@ -1,30 +1,41 @@
 'use client';
 
-import { useState } from 'react';
-import { useCategories } from '@/lib/hooks/useCategories';
+import { useState, useCallback } from 'react';
+import { useOrderedCategories } from '@/lib/hooks/useOrderedCategories';
 import { useTrackedEntities } from '@/lib/hooks/useTrackedEntities';
 import { useEmailPreferences, useToggleEmailPreference } from '@/lib/hooks/useEmailPreferences';
+import { useUpdateCategoryOrder } from '@/lib/hooks/useCategoryOrder';
 import { AddEntityForm } from '@/components/tracked/AddEntityForm';
 import { EntityList } from '@/components/tracked/EntityList';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SortableCard } from '@/components/shared/SortableCard';
+import { SortableCardGrid } from '@/components/shared/SortableCardGrid';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
 import { Category } from '@/types/database';
 
 export default function TrackedPage() {
-  const { data: categories, isLoading: catLoading } = useCategories();
+  const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: entities, isLoading: entLoading } = useTrackedEntities();
   const { data: emailPrefs } = useEmailPreferences();
   const toggleEmail = useToggleEmailPreference();
+  const updateOrder = useUpdateCategoryOrder();
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+
+  const handleReorder = useCallback(
+    (reordered: Category[]) => {
+      updateOrder.mutate(reordered.map((c) => c.id));
+    },
+    [updateOrder]
+  );
 
   if (catLoading || entLoading) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tracked Entities</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Tracked Items</h1>
           <p className="text-muted-foreground">Manage the things you follow.</p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -50,71 +61,75 @@ export default function TrackedPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Tracked Entities</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Tracked Items</h1>
         <p className="text-muted-foreground">
           Manage the artists, stocks, repos, and more that you follow.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {(categories || []).map((cat: Category) => {
+      <SortableCardGrid
+        items={categories || []}
+        onReorder={handleReorder}
+        renderCard={(cat: Category) => {
           const Icon = getCategoryIcon(cat.slug);
           const color = getCategoryColor(cat.slug);
           const catEntities = entitiesByCategory[cat.id] || [];
           const isExpanded = expandedSlug === cat.slug;
 
           return (
-            <Card key={cat.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle
-                    className="flex items-center gap-2 text-base cursor-pointer"
-                    onClick={() => setExpandedSlug(isExpanded ? null : cat.slug)}
-                  >
-                    <Icon className="h-4 w-4" style={{ color }} />
-                    {cat.name}
-                    <span className="text-xs text-muted-foreground font-normal">
-                      ({catEntities.length})
-                    </span>
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`email-${cat.id}`} className="text-xs text-muted-foreground">
-                      Email
-                    </Label>
-                    <Switch
-                      id={`email-${cat.id}`}
-                      checked={getEmailEnabled(cat.id)}
-                      onCheckedChange={(checked) =>
-                        toggleEmail.mutate({ categoryId: cat.id, enabled: checked })
-                      }
-                    />
+            <SortableCard key={cat.id} id={cat.id}>
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle
+                      className="flex items-center gap-2 text-base cursor-pointer"
+                      onClick={() => setExpandedSlug(isExpanded ? null : cat.slug)}
+                    >
+                      <Icon className="h-4 w-4" style={{ color }} />
+                      {cat.name}
+                      <span className="text-xs text-muted-foreground font-normal">
+                        ({catEntities.length})
+                      </span>
+                    </CardTitle>
+                    <div className="flex items-center gap-2 mr-6">
+                      <Label htmlFor={`email-${cat.id}`} className="text-xs text-muted-foreground">
+                        Email
+                      </Label>
+                      <Switch
+                        id={`email-${cat.id}`}
+                        checked={getEmailEnabled(cat.id)}
+                        onCheckedChange={(checked) =>
+                          toggleEmail.mutate({ categoryId: cat.id, enabled: checked })
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-                {cat.description && (
-                  <p className="text-xs text-muted-foreground">{cat.description}</p>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <EntityList entities={catEntities} />
-                {isExpanded && (
-                  <AddEntityForm
-                    category={cat}
-                    onSuccess={() => setExpandedSlug(null)}
-                  />
-                )}
-                {!isExpanded && (
-                  <button
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => setExpandedSlug(cat.slug)}
-                  >
-                    + Add entity
-                  </button>
-                )}
-              </CardContent>
-            </Card>
+                  {cat.description && (
+                    <p className="text-xs text-muted-foreground">{cat.description}</p>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <EntityList entities={catEntities} />
+                  {isExpanded && (
+                    <AddEntityForm
+                      category={cat}
+                      onSuccess={() => setExpandedSlug(null)}
+                    />
+                  )}
+                  {!isExpanded && (
+                    <button
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => setExpandedSlug(cat.slug)}
+                    >
+                      + Add entity
+                    </button>
+                  )}
+                </CardContent>
+              </Card>
+            </SortableCard>
           );
-        })}
-      </div>
+        }}
+      />
     </div>
   );
 }

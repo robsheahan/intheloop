@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import { useCategories } from '@/lib/hooks/useCategories';
+import { useOrderedCategories } from '@/lib/hooks/useOrderedCategories';
 import { useAlerts, useUnseenCounts } from '@/lib/hooks/useAlerts';
 import { useTrackedEntities } from '@/lib/hooks/useTrackedEntities';
+import { useUpdateCategoryOrder } from '@/lib/hooks/useCategoryOrder';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SortableCard } from '@/components/shared/SortableCard';
+import { SortableCardGrid } from '@/components/shared/SortableCardGrid';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
 import { AlertCard } from '@/components/shared/AlertCard';
 import { useMarkSeen } from '@/lib/hooks/useAlerts';
@@ -19,11 +22,12 @@ import { Category } from '@/types/database';
 
 export default function DashboardPage() {
   const { profile } = useAuth();
-  const { data: categories, isLoading: catLoading } = useCategories();
+  const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: entities } = useTrackedEntities();
   const { data: alerts, isLoading: alertsLoading } = useAlerts(undefined, true);
   const { data: unseenCounts } = useUnseenCounts();
   const markSeen = useMarkSeen();
+  const updateOrder = useUpdateCategoryOrder();
   const [isRunning, setIsRunning] = useState(false);
 
   const handleRunPipelines = async () => {
@@ -78,6 +82,18 @@ export default function DashboardPage() {
     (c: Category) => (entitiesCountByCategory[c.id] || 0) > 0
   );
 
+  const handleReorder = useCallback(
+    (reordered: Category[]) => {
+      // Persist the full ordered list (all categories, not just active)
+      // by taking the reordered active items and preserving the rest
+      const activeIds = new Set(reordered.map((c) => c.id));
+      const inactiveCategories = (categories || []).filter((c) => !activeIds.has(c.id));
+      const fullOrder = [...reordered, ...inactiveCategories];
+      updateOrder.mutate(fullOrder.map((c) => c.id));
+    },
+    [categories, updateOrder]
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -106,55 +122,59 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {activeCategories.map((cat: Category) => {
+        <SortableCardGrid
+          items={activeCategories}
+          onReorder={handleReorder}
+          renderCard={(cat: Category) => {
             const Icon = getCategoryIcon(cat.slug);
             const color = getCategoryColor(cat.slug);
             const count = unseenCounts?.[cat.slug] || 0;
             const catAlerts = (alertsByCategory[cat.slug] || []).slice(0, 3);
 
             return (
-              <Card key={cat.id}>
-                <CardHeader className="pb-2">
-                  <Link href={`/category/${cat.slug}`}>
-                    <CardTitle className="flex items-center justify-between text-base">
-                      <span className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" style={{ color }} />
-                        {cat.name}
-                      </span>
-                      {count > 0 && (
-                        <Badge variant="secondary">{count}</Badge>
-                      )}
-                    </CardTitle>
-                  </Link>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {catAlerts.length > 0 ? (
-                    catAlerts.map((a) => (
-                      <AlertCard
-                        key={a.id}
-                        alert={a}
-                        onMarkSeen={(id) => markSeen.mutate(id)}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-xs text-muted-foreground py-2">
-                      No unseen alerts. Tap New Events to check for updates.
-                    </p>
-                  )}
-                  {count > 3 && (
-                    <Link
-                      href={`/category/${cat.slug}`}
-                      className="text-xs text-muted-foreground hover:underline"
-                    >
-                      View all {count} alerts
+              <SortableCard key={cat.id} id={cat.id}>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <Link href={`/category/${cat.slug}`}>
+                      <CardTitle className="flex items-center justify-between text-base">
+                        <span className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" style={{ color }} />
+                          {cat.name}
+                        </span>
+                        {count > 0 && (
+                          <Badge variant="secondary" className="mr-6">{count}</Badge>
+                        )}
+                      </CardTitle>
                     </Link>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {catAlerts.length > 0 ? (
+                      catAlerts.map((a) => (
+                        <AlertCard
+                          key={a.id}
+                          alert={a}
+                          onMarkSeen={(id) => markSeen.mutate(id)}
+                        />
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground py-2">
+                        No unseen alerts. Tap New Events to check for updates.
+                      </p>
+                    )}
+                    {count > 3 && (
+                      <Link
+                        href={`/category/${cat.slug}`}
+                        className="text-xs text-muted-foreground hover:underline"
+                      >
+                        View all {count} alerts
+                      </Link>
+                    )}
+                  </CardContent>
+                </Card>
+              </SortableCard>
             );
-          })}
-        </div>
+          }}
+        />
       )}
     </div>
   );
