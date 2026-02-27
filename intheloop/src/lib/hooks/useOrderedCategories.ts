@@ -4,7 +4,7 @@ import { useCategoryOrder } from './useCategoryOrder';
 import { Category } from '@/types/database';
 
 export function useOrderedCategories() {
-  const { data: categories, isLoading: catLoading } = useCategories();
+  const { data: categories, isLoading: catLoading, isError: catError } = useCategories();
   const { data: categoryOrder, isLoading: orderLoading } = useCategoryOrder();
 
   const orderedCategories = useMemo(() => {
@@ -32,5 +32,6 @@ export function useOrderedCategories() {
   return {
     data: orderedCategories,
     isLoading: catLoading || orderLoading,
+    isError: catError,
   };
 }

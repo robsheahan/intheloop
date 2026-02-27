@@ -18,8 +18,8 @@ import { useMarkSeen } from '@/lib/hooks/useAlerts';
 import { Category } from '@/types/database';
 
 export default function DashboardPage() {
-  const { profile, isLoading: authLoading } = useAuth();
-  const { data: categories, isLoading: catLoading } = useOrderedCategories();
+  const { profile } = useAuth();
+  const { data: categories, isLoading: catLoading, isError: catError } = useOrderedCategories();
   const { data: entities, isLoading: entLoading } = useTrackedEntities();
   const { data: alerts } = useAlerts(undefined, true, 30);
   const { data: unseenCounts } = useUnseenCounts();
@@ -50,7 +50,6 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
-  // Group alerts by category slug for preview
   const alertsByCategory = (alerts || []).reduce<Record<string, typeof alerts>>((acc, a) => {
     const slug = a.tracked_entity?.category?.slug;
     if (slug) {
@@ -60,27 +59,10 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
-  // Show skeletons while auth or core data is loading (not alerts)
-  if (authLoading || catLoading || entLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-40" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Only show categories that have tracked entities
-  const activeCategories = (categories || []).filter(
-    (c: Category) => (entitiesCountByCategory[c.id] || 0) > 0
-  );
+  const dataReady = !catLoading && !entLoading && categories;
+  const activeCategories = dataReady
+    ? (categories || []).filter((c: Category) => (entitiesCountByCategory[c.id] || 0) > 0)
+    : [];
 
   return (
     <div className="space-y-6">
@@ -97,7 +79,24 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {activeCategories.length === 0 ? (
+      {!dataReady ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-40" />
+          ))}
+        </div>
+      ) : catError ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-muted-foreground">
+              Failed to load data.{' '}
+              <button onClick={() => window.location.reload()} className="underline">
+                Reload
+              </button>
+            </p>
+          </CardContent>
+        </Card>
+      ) : activeCategories.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-muted-foreground">
