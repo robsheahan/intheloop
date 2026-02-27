@@ -101,7 +101,16 @@ export function AddEntityForm({ category, onSuccess }: Props) {
       {config.fields.map((field) => (
         <div key={field.name} className="space-y-1.5">
           <Label>{field.label}</Label>
-          {field.type === 'select' ? (
+          {field.type === 'autocomplete' && field.searchSlug ? (
+            <AutocompleteInput
+              value={metadata[field.name] || ''}
+              onChange={(val) =>
+                setMetadata((prev) => ({ ...prev, [field.name]: val }))
+              }
+              placeholder={field.placeholder}
+              categorySlug={field.searchSlug}
+            />
+          ) : field.type === 'select' ? (
             <select
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
               value={metadata[field.name] || (field.options?.[0]?.value ?? '')}
@@ -118,7 +127,7 @@ export function AddEntityForm({ category, onSuccess }: Props) {
             </select>
           ) : (
             <Input
-              type={field.type}
+              type={field.type === 'autocomplete' ? 'text' : field.type}
               step={field.type === 'number' ? 'any' : undefined}
               placeholder={field.placeholder}
               value={metadata[field.name] || ''}

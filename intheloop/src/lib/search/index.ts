@@ -23,6 +23,7 @@ const SEARCH_MAP: Record<string, SearchFunction> = {
   podcasts: searchPodcasts,
   weather: searchWeather,
   currency: searchCurrency,
+  cities: searchWeather,
   // news and reddit are freeform keywords — no search
 };
 

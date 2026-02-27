@@ -1,10 +1,11 @@
 export interface CategoryField {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'select';
+  type: 'text' | 'number' | 'select' | 'autocomplete';
   placeholder?: string;
   required?: boolean;
   options?: { label: string; value: string }[];
+  searchSlug?: string;
 }
 
 export interface CategoryFormConfig {
@@ -34,7 +35,7 @@ export const CATEGORY_FORM_CONFIGS: Record<string, CategoryFormConfig> = {
     entityLabel: 'Artist name',
     entityPlaceholder: 'e.g. Taylor Swift',
     fields: [
-      { name: 'city', label: 'City (optional)', type: 'text', placeholder: 'e.g. Melbourne' },
+      { name: 'city', label: 'City (optional)', type: 'autocomplete', placeholder: 'e.g. Melbourne', searchSlug: 'cities' },
       { name: 'country', label: 'Country (optional)', type: 'text', placeholder: 'e.g. AU' },
     ],
   },
