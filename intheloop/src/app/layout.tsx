@@ -22,13 +22,13 @@ export const metadata: Metadata = {
   description: 'Stay in the loop with personalized alerts for music, books, news, crypto, and more.',
   icons: {
     icon: [
-      { url: '/intheloop/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
-      { url: '/intheloop/favicon.svg', type: 'image/svg+xml' },
-      { url: '/intheloop/favicon.ico', rel: 'shortcut icon' },
+      { url: '/intheloopnew/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/intheloopnew/favicon.svg', type: 'image/svg+xml' },
+      { url: '/intheloopnew/favicon.ico', rel: 'shortcut icon' },
     ],
-    apple: '/intheloop/apple-touch-icon.png',
+    apple: '/intheloopnew/apple-touch-icon.png',
   },
-  manifest: '/intheloop/site.webmanifest',
+  manifest: '/intheloopnew/site.webmanifest',
   appleWebApp: {
     title: 'In The Loop',
   },
