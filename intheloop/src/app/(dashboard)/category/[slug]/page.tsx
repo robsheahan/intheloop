@@ -20,11 +20,41 @@ import {
 } from '@/components/ui/table';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
 
+interface EntityGroup {
+  entityName: string;
+  alerts: AlertHistory[];
+}
 
-function sortNewestFirst(alerts: AlertHistory[]): AlertHistory[] {
-  return [...alerts].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
+/** Filter out alerts where the content author/artist doesn't match the tracked entity name */
+function filterMismatched(alerts: AlertHistory[]): AlertHistory[] {
+  return alerts.filter((a) => {
+    const entityName = a.tracked_entity?.entity_name;
+    if (!entityName) return true;
+    const type = a.content.type as string;
+    let contentName: string | undefined;
+    if (type === 'books') contentName = a.content.author as string;
+    else if (type === 'music' || type === 'tours') contentName = a.content.artist as string;
+    if (!contentName) return true;
+    return contentName.toLowerCase() === entityName.toLowerCase();
+  });
+}
+
+function groupByEntity(alerts: AlertHistory[]): EntityGroup[] {
+  const map = new Map<string, AlertHistory[]>();
+  for (const a of alerts) {
+    const name = a.tracked_entity?.entity_name || 'Unknown';
+    const list = map.get(name) || [];
+    list.push(a);
+    map.set(name, list);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([entityName, groupAlerts]) => ({
+      entityName,
+      alerts: [...groupAlerts].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ),
+    }));
 }
 
 function renderTitle(content: Record<string, unknown>, type: string): string {
@@ -32,7 +62,7 @@ function renderTitle(content: Record<string, unknown>, type: string): string {
     case 'music':
       return `${content.title} - ${content.artist}`;
     case 'books':
-      return `${content.title} by ${content.author}`;
+      return content.title as string;
     case 'news':
       return content.title as string;
     case 'crypto':
@@ -177,11 +207,12 @@ export default function CategoryPage() {
   const Icon = getCategoryIcon(slug);
   const color = getCategoryColor(slug);
 
-  const unseenAlerts = (alerts || []).filter((a) => !a.seen_at);
-  const seenAlerts = (alerts || []).filter((a) => a.seen_at);
+  const filtered = filterMismatched(alerts || []);
+  const unseenAlerts = filtered.filter((a) => !a.seen_at);
+  const seenAlerts = filtered.filter((a) => a.seen_at);
 
-  const sortedUnseen = sortNewestFirst(unseenAlerts);
-  const sortedSeen = sortNewestFirst(seenAlerts);
+  const unseenGroups = groupByEntity(unseenAlerts);
+  const seenGroups = groupByEntity(seenAlerts);
 
   const handleMarkAllSeen = async () => {
     try {
@@ -238,28 +269,38 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {sortedUnseen.length > 0 && (
-        <div className="space-y-2">
+      {unseenGroups.length > 0 && (
+        <div className="space-y-5">
           <h2 className="text-sm font-medium text-muted-foreground">
-            Unseen ({sortedUnseen.length})
+            Unseen ({unseenAlerts.length})
           </h2>
-          <AlertTable
-            alerts={sortedUnseen}
-            onMarkSeen={(id) => markSeen.mutate(id)}
-          />
+          {unseenGroups.map((group) => (
+            <div key={group.entityName} className="space-y-1">
+              <h3 className="text-sm font-semibold">{group.entityName}</h3>
+              <AlertTable
+                alerts={group.alerts}
+                onMarkSeen={(id) => markSeen.mutate(id)}
+              />
+            </div>
+          ))}
         </div>
       )}
 
-      {sortedSeen.length > 0 && (
-        <div className="space-y-2">
+      {seenGroups.length > 0 && (
+        <div className="space-y-5">
           <h2 className="text-sm font-medium text-muted-foreground">
-            Previous ({sortedSeen.length})
+            Previous ({seenAlerts.length})
           </h2>
-          <AlertTable alerts={sortedSeen} />
+          {seenGroups.map((group) => (
+            <div key={group.entityName} className="space-y-1">
+              <h3 className="text-sm font-semibold">{group.entityName}</h3>
+              <AlertTable alerts={group.alerts} />
+            </div>
+          ))}
         </div>
       )}
 
-      {(alerts || []).length === 0 && (
+      {filtered.length === 0 && (
         <p className="text-muted-foreground text-sm py-4">
           No alerts yet. Tap New Events to check for updates.
         </p>
