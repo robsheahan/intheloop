@@ -99,7 +99,7 @@ export default function CategoryPage() {
 
       {(alerts || []).length === 0 && (
         <p className="text-muted-foreground text-sm py-4">
-          No alerts yet. Run pipelines to check for updates.
+          No alerts yet. Tap New Events to check for updates.
         </p>
       )}
     </div>

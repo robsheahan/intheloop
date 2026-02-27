@@ -39,7 +39,7 @@ export default function DashboardPage() {
         toast.error(data.error || 'Pipeline run failed');
       }
     } catch {
-      toast.error('Failed to run pipelines');
+      toast.error('Failed to fetch new events');
     } finally {
       setIsRunning(false);
     }
@@ -87,9 +87,9 @@ export default function DashboardPage() {
             Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}.
           </p>
         </div>
-        <Button onClick={handleRunPipelines} disabled={isRunning} size="sm">
+        <Button onClick={handleRunPipelines} disabled={isRunning} size="sm" className="bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg transition-shadow">
           <RefreshCw className={`h-4 w-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
-          {isRunning ? 'Running...' : 'Run pipelines'}
+          {isRunning ? 'Running...' : 'New Events'}
         </Button>
       </div>
 
@@ -139,7 +139,7 @@ export default function DashboardPage() {
                     ))
                   ) : (
                     <p className="text-xs text-muted-foreground py-2">
-                      No unseen alerts. Run pipelines to check for updates.
+                      No unseen alerts. Tap New Events to check for updates.
                     </p>
                   )}
                   {count > 3 && (
