@@ -48,13 +48,17 @@ function groupByEntity(alerts: AlertHistory[]): EntityGroup[] {
     map.set(name, list);
   }
   return Array.from(map.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
     .map(([entityName, groupAlerts]) => ({
       entityName,
       alerts: [...groupAlerts].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ),
-    }));
+    }))
+    .sort((a, b) => {
+      const aLatest = new Date(a.alerts[0]?.created_at || 0).getTime();
+      const bLatest = new Date(b.alerts[0]?.created_at || 0).getTime();
+      return bLatest - aLatest;
+    });
 }
 
 function renderTitle(content: Record<string, unknown>, type: string): string {
