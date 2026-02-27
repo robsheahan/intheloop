@@ -9,15 +9,21 @@ const fetchWithTimeout: typeof fetch = (input, init) => {
 };
 
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      global: {
-        fetch: fetchWithTimeout,
-      },
-    }
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    // Return a dummy client during build/prerender — it won't be called
+    return createBrowserClient('https://placeholder.supabase.co', 'placeholder', {
+      global: { fetch: fetchWithTimeout },
+    });
+  }
+
+  return createBrowserClient(url, key, {
+    global: {
+      fetch: fetchWithTimeout,
+    },
+  });
 }
 
 export function withTimeout<T>(promise: PromiseLike<T>, ms = 15_000): Promise<T> {

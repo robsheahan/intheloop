@@ -5,8 +5,6 @@ import { AuthProvider } from '@/context/AuthContext';
 import { QueryProvider } from '@/context/QueryProvider';
 import './globals.css';
 
-export const dynamic = 'force-dynamic';
-
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
