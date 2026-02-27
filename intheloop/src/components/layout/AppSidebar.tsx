@@ -41,7 +41,7 @@ export function AppSidebar() {
             alt="In The Loop"
             width={200}
             height={200}
-            className="h-16 w-auto"
+            className="h-24 w-auto"
           />
         </Link>
       </SidebarHeader>
