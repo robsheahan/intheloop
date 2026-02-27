@@ -119,17 +119,17 @@ function AlertTable({
           return (
             <TableRow
               key={a.id}
-              className={isUnseen ? 'bg-muted/30' : ''}
+              className={isUnseen ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}
             >
               <TableCell className="font-medium max-w-[300px] truncate">
                 {renderTitle(a.content, type)}
               </TableCell>
-              <TableCell className="text-muted-foreground max-w-[300px] truncate">
+              <TableCell className="max-w-[300px] truncate">
                 {renderDetail(a.content, type)}
               </TableCell>
               <TableCell>
                 {isUnseen && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  <Badge className="bg-green-600 text-white text-[10px] px-1.5 py-0 hover:bg-green-600">
                     New
                   </Badge>
                 )}
