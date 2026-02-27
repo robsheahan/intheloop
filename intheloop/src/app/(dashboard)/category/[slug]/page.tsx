@@ -8,7 +8,6 @@ import { useCategories } from '@/lib/hooks/useCategories';
 import { useAlerts, useMarkSeen, useMarkAllSeen } from '@/lib/hooks/useAlerts';
 import { AlertHistory } from '@/types/database';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -130,20 +129,17 @@ function renderDetail(content: Record<string, unknown>, type: string): string {
 function AlertTable({
   alerts,
   onMarkSeen,
-  showEntity = false,
 }: {
   alerts: AlertHistory[];
   onMarkSeen?: (id: string) => void;
-  showEntity?: boolean;
 }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          {showEntity && <TableHead>Entity</TableHead>}
+          <TableHead>Entity</TableHead>
           <TableHead>Title</TableHead>
           <TableHead>Detail</TableHead>
-          <TableHead className="w-16">Status</TableHead>
           <TableHead className="w-20 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -158,23 +154,14 @@ function AlertTable({
               key={a.id}
               className={isUnseen ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}
             >
-              {showEntity && (
-                <TableCell className="font-semibold">
-                  {a.tracked_entity?.entity_name || 'Unknown'}
-                </TableCell>
-              )}
+              <TableCell className="font-semibold">
+                {a.tracked_entity?.entity_name || 'Unknown'}
+              </TableCell>
               <TableCell className="font-medium max-w-[300px] truncate">
                 {renderTitle(a.content, type)}
               </TableCell>
               <TableCell className="max-w-[300px] truncate">
                 {renderDetail(a.content, type)}
-              </TableCell>
-              <TableCell>
-                {isUnseen && (
-                  <Badge className="bg-green-600 text-white text-[10px] px-1.5 py-0 hover:bg-green-600">
-                    New
-                  </Badge>
-                )}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
@@ -289,7 +276,6 @@ export default function CategoryPage() {
           <AlertTable
             alerts={unseenAlerts}
             onMarkSeen={(id) => markSeen.mutate(id)}
-            showEntity
           />
         </div>
       )}
