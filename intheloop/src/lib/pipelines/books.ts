@@ -1,13 +1,16 @@
 import { PipelineContext, PipelineResult } from './types';
 
-const OL_SEARCH = 'https://openlibrary.org/search.json';
+const GB_SEARCH = 'https://www.googleapis.com/books/v1/volumes';
 
-interface OLDoc {
-  title: string;
-  author_name?: string[];
-  first_publish_year?: number;
-  key: string;
-  cover_i?: number;
+interface GBVolume {
+  id: string;
+  volumeInfo: {
+    title: string;
+    authors?: string[];
+    publishedDate?: string;
+    infoLink?: string;
+    imageLinks?: { thumbnail?: string };
+  };
 }
 
 export async function checkBooks(ctx: PipelineContext): Promise<PipelineResult[]> {
@@ -19,7 +22,9 @@ export async function checkBooks(ctx: PipelineContext): Promise<PipelineResult[]
     try {
       const books = await fetchAuthorBooks(author);
       for (const book of books) {
-        const dedupKey = `${author}|${book.title}`;
+        const vi = book.volumeInfo;
+        const year = vi.publishedDate ? vi.publishedDate.slice(0, 4) : null;
+        const dedupKey = `${author}|${vi.title}`;
 
         results.push({
           entity_name: author,
@@ -27,13 +32,11 @@ export async function checkBooks(ctx: PipelineContext): Promise<PipelineResult[]
           dedup_key: dedupKey,
           content: {
             type: 'books',
-            title: book.title,
-            author: book.author_name?.[0] || author,
-            year: book.first_publish_year,
-            url: `https://openlibrary.org${book.key}`,
-            cover_url: book.cover_i
-              ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
-              : null,
+            title: vi.title,
+            author: vi.authors?.[0] || author,
+            year: year ? parseInt(year, 10) : null,
+            url: vi.infoLink || `https://books.google.com/books?id=${book.id}`,
+            cover_url: vi.imageLinks?.thumbnail || null,
           },
         });
       }
@@ -45,24 +48,27 @@ export async function checkBooks(ctx: PipelineContext): Promise<PipelineResult[]
   return results;
 }
 
-async function fetchAuthorBooks(author: string): Promise<OLDoc[]> {
+async function fetchAuthorBooks(author: string): Promise<GBVolume[]> {
   const params = new URLSearchParams({
-    author: author,
-    sort: 'new',
-    limit: '10',
-    fields: 'title,author_name,first_publish_year,key,cover_i',
+    q: `inauthor:"${author}"`,
+    orderBy: 'newest',
+    maxResults: '10',
+    printType: 'books',
   });
 
-  const res = await fetch(`${OL_SEARCH}?${params}`);
+  const res = await fetch(`${GB_SEARCH}?${params}`, {
+    signal: AbortSignal.timeout(10000),
+  });
   if (!res.ok) return [];
 
   const data = await res.json();
-  const docs: OLDoc[] = data.docs || [];
+  const items: GBVolume[] = data.items || [];
 
-  // Filter to books actually authored by the tracked author —
-  // Open Library fuzzy-matches, so unrelated authors can slip through.
+  // Filter to books actually authored by the tracked author
   const authorLower = author.toLowerCase();
-  return docs.filter((doc) =>
-    doc.author_name?.some((name) => name.toLowerCase() === authorLower)
+  return items.filter((item) =>
+    item.volumeInfo.authors?.some((name) =>
+      name.toLowerCase() === authorLower
+    )
   );
 }
