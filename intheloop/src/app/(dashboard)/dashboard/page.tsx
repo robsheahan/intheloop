@@ -18,7 +18,7 @@ import { useMarkSeen } from '@/lib/hooks/useAlerts';
 import { Category } from '@/types/database';
 
 export default function DashboardPage() {
-  const { profile } = useAuth();
+  const { profile, isLoading: authLoading } = useAuth();
   const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: entities, isLoading: entLoading } = useTrackedEntities();
   const { data: alerts } = useAlerts(undefined, true, 30);
@@ -60,8 +60,8 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
-  // Show skeletons only while categories + entities are loading (not alerts)
-  if (catLoading || entLoading) {
+  // Show skeletons while auth or core data is loading (not alerts)
+  if (authLoading || catLoading || entLoading) {
     return (
       <div className="space-y-6">
         <div>
