@@ -107,7 +107,7 @@ export default function TrackedPage() {
                     className="text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => setExpandedSlug(cat.slug)}
                   >
-                    + Add entity
+                    + Add item
                   </button>
                 )}
               </CardContent>
