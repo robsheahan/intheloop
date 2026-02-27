@@ -49,10 +49,40 @@ export async function checkBooks(ctx: PipelineContext): Promise<PipelineResult[]
 }
 
 async function fetchAuthorBooks(author: string): Promise<GBVolume[]> {
+  // Run three queries to maximize coverage:
+  // 1. inauthor: ordered by newest
+  // 2. inauthor: ordered by relevance
+  // 3. Plain author name search (catches books not indexed under inauthor:)
+  const [newestItems, relevanceItems, plainItems] = await Promise.all([
+    fetchGBQuery(`inauthor:"${author}"`, 'newest'),
+    fetchGBQuery(`inauthor:"${author}"`, 'relevance'),
+    fetchGBQuery(`"${author}"`, 'newest'),
+  ]);
+
+  // Merge and deduplicate by volume id
+  const seen = new Set<string>();
+  const merged: GBVolume[] = [];
+  for (const item of [...newestItems, ...relevanceItems, ...plainItems]) {
+    if (!seen.has(item.id)) {
+      seen.add(item.id);
+      merged.push(item);
+    }
+  }
+
+  // Filter to books actually authored by the tracked author
+  const authorLower = author.toLowerCase();
+  return merged.filter((item) =>
+    item.volumeInfo.authors?.some((name) =>
+      name.toLowerCase() === authorLower
+    )
+  );
+}
+
+async function fetchGBQuery(query: string, orderBy: string): Promise<GBVolume[]> {
   const params = new URLSearchParams({
-    q: `inauthor:"${author}"`,
-    orderBy: 'newest',
-    maxResults: '10',
+    q: query,
+    orderBy,
+    maxResults: '40',
     printType: 'books',
   });
 
@@ -62,13 +92,5 @@ async function fetchAuthorBooks(author: string): Promise<GBVolume[]> {
   if (!res.ok) return [];
 
   const data = await res.json();
-  const items: GBVolume[] = data.items || [];
-
-  // Filter to books actually authored by the tracked author
-  const authorLower = author.toLowerCase();
-  return items.filter((item) =>
-    item.volumeInfo.authors?.some((name) =>
-      name.toLowerCase() === authorLower
-    )
-  );
+  return data.items || [];
 }
