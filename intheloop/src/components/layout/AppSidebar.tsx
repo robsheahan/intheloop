@@ -35,7 +35,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex justify-center">
           <Image
             src="/intheloopnew.svg"
             alt="In The Loop"
