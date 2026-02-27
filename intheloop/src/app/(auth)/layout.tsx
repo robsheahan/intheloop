@@ -14,7 +14,7 @@ export default function AuthLayout({
             alt="In The Loop"
             width={500}
             height={100}
-            className="h-16 w-auto"
+            className="h-20 w-auto"
             priority
           />
           <p className="text-sm text-muted-foreground mt-2">
