@@ -126,6 +126,27 @@ export function useMarkAllSeen() {
   });
 }
 
+export function useMarkAllSeenGlobal() {
+  const supabase = createClient();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('alert_history')
+        .update({ seen_at: new Date().toISOString() })
+        .eq('user_id', user!.id)
+        .is('seen_at', null);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['unseen-counts'] });
+    },
+  });
+}
+
 export function useAlertHistory(page: number, pageSize = 30) {
   const supabase = createClient();
   const { user } = useAuth();

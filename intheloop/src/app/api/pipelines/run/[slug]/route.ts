@@ -41,7 +41,7 @@ export async function POST(
     .eq('user_id', user.id);
 
   if (!entities || entities.length === 0) {
-    return NextResponse.json({ success: true, new_alerts: 0, message: 'No tracked entities' });
+    return NextResponse.json({ success: true, new_alerts: 0, message: 'No tracked items' });
   }
 
   try {

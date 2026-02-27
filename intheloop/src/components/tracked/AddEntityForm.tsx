@@ -9,6 +9,7 @@ import { Category } from '@/types/database';
 import { useAddTrackedEntity } from '@/lib/hooks/useTrackedEntities';
 import { CATEGORY_FORM_CONFIGS } from '@/lib/utils/category-fields';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
+import { useAuth } from '@/context/AuthContext';
 
 const AUTOCOMPLETE_CATEGORIES = new Set([
   'music', 'tours', 'books', 'crypto', 'stocks', 'movies',
@@ -27,10 +28,17 @@ interface Props {
 export function AddEntityForm({ category, onSuccess }: Props) {
   const config = CATEGORY_FORM_CONFIGS[category.slug];
   const isStrict = STRICT_AUTOCOMPLETE_CATEGORIES.has(category.slug);
+  const { profile } = useAuth();
+  const hasCityField = config?.fields.some((f) => f.name === 'city');
+  const prefillCity = hasCityField && profile?.default_city ? profile.default_city : '';
   const [entityName, setEntityName] = useState('');
-  const [metadata, setMetadata] = useState<Record<string, string>>({});
+  const [metadata, setMetadata] = useState<Record<string, string>>(
+    prefillCity ? { city: prefillCity } : {}
+  );
   const [entitySelected, setEntitySelected] = useState(false);
-  const [fieldSelected, setFieldSelected] = useState<Record<string, boolean>>({});
+  const [fieldSelected, setFieldSelected] = useState<Record<string, boolean>>(
+    prefillCity ? { city: true } : {}
+  );
   const addEntity = useAddTrackedEntity();
 
   if (!config) return null;
@@ -73,9 +81,9 @@ export function AddEntityForm({ category, onSuccess }: Props) {
       setFieldSelected({});
       onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to add entity';
+      const message = err instanceof Error ? err.message : 'Failed to add item';
       if (message.includes('duplicate') || message.includes('unique')) {
-        toast.error('You are already tracking this entity');
+        toast.error('You are already tracking this item');
       } else {
         toast.error(message);
       }

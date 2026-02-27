@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { getCategoryIcon } from '@/lib/utils/categories';
+import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 
 export default function SettingsPage() {
   const { profile, refreshProfile } = useAuth();
@@ -20,6 +21,8 @@ export default function SettingsPage() {
   const { data: emailPrefs } = useEmailPreferences();
   const toggleEmail = useToggleEmailPreference();
   const [fullName, setFullName] = useState(profile?.full_name || '');
+  const [defaultCity, setDefaultCity] = useState(profile?.default_city || '');
+  const [citySelected, setCitySelected] = useState(!!profile?.default_city);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -29,7 +32,7 @@ export default function SettingsPage() {
     const supabase = createClient();
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName })
+      .update({ full_name: fullName, default_city: citySelected ? defaultCity : null })
       .eq('id', profile!.id);
 
     if (error) {
@@ -71,6 +74,22 @@ export default function SettingsPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="defaultCity">Default city</Label>
+              <AutocompleteInput
+                value={defaultCity}
+                onChange={(val) => {
+                  setDefaultCity(val);
+                  if (!val) setCitySelected(false);
+                }}
+                placeholder="e.g. Melbourne"
+                categorySlug="cities"
+                onSelectionChange={setCitySelected}
+              />
+              <p className="text-xs text-muted-foreground">
+                Pre-fills the city field when tracking tours
+              </p>
             </div>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save changes'}

@@ -18,14 +18,14 @@ export function EntityList({ entities }: Props) {
       await removeEntity.mutateAsync(entity.id);
       toast.success(`Removed "${entity.entity_name}"`);
     } catch {
-      toast.error('Failed to remove entity');
+      toast.error('Failed to remove item');
     }
   };
 
   if (entities.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-2">
-        No entities tracked yet. Add one above.
+        No items tracked yet. Add one above.
       </p>
     );
   }

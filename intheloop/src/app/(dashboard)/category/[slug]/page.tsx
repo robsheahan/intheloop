@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, CheckCheck, Eye } from 'lucide-react';
@@ -136,71 +137,6 @@ function renderDetail(content: Record<string, unknown>, type: string): string {
   }
 }
 
-function AlertTable({
-  alerts,
-  onMarkSeen,
-}: {
-  alerts: AlertHistory[];
-  onMarkSeen?: (id: string) => void;
-}) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Title</TableHead>
-          <TableHead>Detail</TableHead>
-          <TableHead className="w-20 text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {alerts.map((a) => {
-          const type = a.content.type as string;
-          const isUnseen = !a.seen_at;
-          const url = typeof a.content.url === 'string' ? a.content.url : null;
-
-          return (
-            <TableRow
-              key={a.id}
-              className={isUnseen ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}
-            >
-              <TableCell className="font-medium max-w-[300px] truncate">
-                {renderTitle(a.content, type)}
-              </TableCell>
-              <TableCell className="max-w-[300px] truncate">
-                {renderDetail(a.content, type)}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  {isUnseen && onMarkSeen && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => onMarkSeen(a.id)}
-                    >
-                      <Eye className="h-3 w-3" />
-                    </Button>
-                  )}
-                  {url && (
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:underline"
-                    >
-                      View
-                    </a>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  );
-}
-
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: categories } = useCategories();
@@ -213,8 +149,9 @@ export default function CategoryPage() {
   const color = getCategoryColor(slug);
 
   const filtered = filterMismatched(alerts || []);
-  const unseenCount = filtered.filter((a) => !a.seen_at).length;
-  const groups = groupByEntity(filtered);
+  const unseenAlerts = filtered.filter((a) => !a.seen_at);
+  const seenAlerts = filtered.filter((a) => a.seen_at);
+  const groups = groupByEntity(seenAlerts);
 
   const handleMarkAllSeen = async () => {
     try {
@@ -258,7 +195,7 @@ export default function CategoryPage() {
             )}
           </div>
         </div>
-        {unseenCount > 0 && (
+        {unseenAlerts.length > 0 && (
           <Button
             size="sm"
             onClick={handleMarkAllSeen}
@@ -270,25 +207,120 @@ export default function CategoryPage() {
         )}
       </div>
 
+      {/* Unseen alerts — flat list at the top */}
+      {unseenAlerts.length > 0 && (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[45%]">Title</TableHead>
+              <TableHead className="w-[45%]">Detail</TableHead>
+              <TableHead className="w-[10%] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {unseenAlerts.map((a) => {
+              const type = a.content.type as string;
+              const url = typeof a.content.url === 'string' ? a.content.url : null;
+
+              return (
+                <TableRow
+                  key={a.id}
+                  className="text-[#ff751f] dark:text-[#ff944d]"
+                >
+                  <TableCell className="font-medium truncate">
+                    {renderTitle(a.content, type)}
+                  </TableCell>
+                  <TableCell className="truncate">
+                    {renderDetail(a.content, type)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => markSeen.mutate(a.id)}
+                      >
+                        <Eye className="h-3 w-3" />
+                      </Button>
+                      {url && (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:underline"
+                        >
+                          View
+                        </a>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+
+      {/* Seen alerts — grouped by entity */}
       {groups.length > 0 ? (
-        <div className="space-y-6">
-          {groups.map((group) => (
-            <div key={group.entityName} className="space-y-1">
-              <h3 className="text-sm font-semibold text-primary">
-                {group.entityName}
-              </h3>
-              <AlertTable
-                alerts={group.alerts}
-                onMarkSeen={(id) => markSeen.mutate(id)}
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[45%]">Title</TableHead>
+              <TableHead className="w-[45%]">Detail</TableHead>
+              <TableHead className="w-[10%] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {groups.map((group) => (
+              <Fragment key={group.entityName}>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={3} className="pt-4 pb-1 px-4">
+                    <span className="text-sm font-semibold text-primary">
+                      {group.entityName}
+                    </span>
+                  </TableCell>
+                </TableRow>
+                {group.alerts.map((a) => {
+                  const type = a.content.type as string;
+                  const url = typeof a.content.url === 'string' ? a.content.url : null;
+
+                  return (
+                    <TableRow
+                      key={a.id}
+                      className="text-muted-foreground"
+                    >
+                      <TableCell className="font-medium truncate">
+                        {renderTitle(a.content, type)}
+                      </TableCell>
+                      <TableCell className="truncate">
+                        {renderDetail(a.content, type)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {url && (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-muted-foreground hover:underline"
+                          >
+                            View
+                          </a>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </TableBody>
+        </Table>
+      ) : unseenAlerts.length === 0 ? (
         <p className="text-muted-foreground text-sm py-4">
           No alerts yet. Tap New Events to check for updates.
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

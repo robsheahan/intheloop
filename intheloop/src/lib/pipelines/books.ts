@@ -8,6 +8,7 @@ interface GBVolume {
     title: string;
     authors?: string[];
     publishedDate?: string;
+    language?: string;
     infoLink?: string;
     imageLinks?: { thumbnail?: string };
   };
@@ -60,22 +61,34 @@ async function fetchAuthorBooks(author: string): Promise<GBVolume[]> {
   ]);
 
   // Merge and deduplicate by volume id
-  const seen = new Set<string>();
+  const seenIds = new Set<string>();
   const merged: GBVolume[] = [];
   for (const item of [...newestItems, ...relevanceItems, ...plainItems]) {
-    if (!seen.has(item.id)) {
-      seen.add(item.id);
+    if (!seenIds.has(item.id)) {
+      seenIds.add(item.id);
       merged.push(item);
     }
   }
 
-  // Filter to books actually authored by the tracked author
+  // Filter to English books actually authored by the tracked author
   const authorLower = author.toLowerCase();
-  return merged.filter((item) =>
-    item.volumeInfo.authors?.some((name) =>
-      name.toLowerCase() === authorLower
-    )
-  );
+  const filtered = merged.filter((item) => {
+    const vi = item.volumeInfo;
+    if (vi.language && vi.language !== 'en') return false;
+    return vi.authors?.some((name) => name.toLowerCase() === authorLower);
+  });
+
+  // Deduplicate by normalized title (different editions get different volume IDs)
+  const seenTitles = new Set<string>();
+  const unique: GBVolume[] = [];
+  for (const item of filtered) {
+    const key = item.volumeInfo.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!seenTitles.has(key)) {
+      seenTitles.add(key);
+      unique.push(item);
+    }
+  }
+  return unique;
 }
 
 async function fetchGBQuery(query: string, orderBy: string): Promise<GBVolume[]> {
@@ -84,6 +97,7 @@ async function fetchGBQuery(query: string, orderBy: string): Promise<GBVolume[]>
     orderBy,
     maxResults: '40',
     printType: 'books',
+    langRestrict: 'en',
   });
 
   const res = await fetch(`${GB_SEARCH}?${params}`, {
