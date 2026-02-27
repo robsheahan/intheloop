@@ -3,12 +3,12 @@ import { createClient } from '@/lib/supabase/client';
 import { AlertHistory } from '@/types/database';
 import { useAuth } from '@/context/AuthContext';
 
-export function useAlerts(categorySlug?: string, unseenOnly = false) {
+export function useAlerts(categorySlug?: string, unseenOnly = false, limit?: number) {
   const supabase = createClient();
   const { user } = useAuth();
 
   return useQuery<AlertHistory[]>({
-    queryKey: ['alerts', categorySlug, unseenOnly],
+    queryKey: ['alerts', categorySlug, unseenOnly, limit],
     enabled: !!user,
     queryFn: async () => {
       let query = supabase
@@ -23,6 +23,10 @@ export function useAlerts(categorySlug?: string, unseenOnly = false) {
 
       if (categorySlug) {
         query = query.eq('tracked_entity.category.slug', categorySlug);
+      }
+
+      if (limit) {
+        query = query.limit(limit);
       }
 
       const { data, error } = await query;

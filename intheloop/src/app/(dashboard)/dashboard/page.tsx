@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const { profile } = useAuth();
   const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: entities } = useTrackedEntities();
-  const { data: alerts, isLoading: alertsLoading } = useAlerts(undefined, true);
+  const { data: alerts, isLoading: alertsLoading } = useAlerts(undefined, true, 30);
   const { data: unseenCounts } = useUnseenCounts();
   const markSeen = useMarkSeen();
   const [isRunning, setIsRunning] = useState(false);
