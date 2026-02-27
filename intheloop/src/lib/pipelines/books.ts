@@ -57,5 +57,12 @@ async function fetchAuthorBooks(author: string): Promise<OLDoc[]> {
   if (!res.ok) return [];
 
   const data = await res.json();
-  return data.docs || [];
+  const docs: OLDoc[] = data.docs || [];
+
+  // Filter to books actually authored by the tracked author —
+  // Open Library fuzzy-matches, so unrelated authors can slip through.
+  const authorLower = author.toLowerCase();
+  return docs.filter((doc) =>
+    doc.author_name?.some((name) => name.toLowerCase() === authorLower)
+  );
 }
