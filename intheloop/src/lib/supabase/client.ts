@@ -1,7 +1,8 @@
 import { createBrowserClient } from '@supabase/ssr';
 
 const fetchWithTimeout: typeof fetch = (input, init) => {
-  const timeoutSignal = AbortSignal.timeout(10_000);
+  // 30s timeout — Supabase free-tier projects can take 20s+ to wake from pause
+  const timeoutSignal = AbortSignal.timeout(30_000);
   const signal = init?.signal
     ? AbortSignal.any([init.signal, timeoutSignal])
     : timeoutSignal;

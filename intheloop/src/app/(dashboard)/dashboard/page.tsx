@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useOrderedCategories } from '@/lib/hooks/useOrderedCategories';
@@ -18,20 +18,23 @@ import { useMarkSeen } from '@/lib/hooks/useAlerts';
 import { Category } from '@/types/database';
 
 export default function DashboardPage() {
-  const { profile, user, isLoading: authLoading } = useAuth();
+  const { profile } = useAuth();
   const { data: categories, isLoading: catLoading, isError: catError } = useOrderedCategories();
   const { data: entities, isLoading: entLoading } = useTrackedEntities();
   const { data: alerts } = useAlerts(undefined, true, 30);
   const { data: unseenCounts } = useUnseenCounts();
   const markSeen = useMarkSeen();
   const [isRunning, setIsRunning] = useState(false);
-  const [timedOut, setTimedOut] = useState(false);
+  const [slowLoad, setSlowLoad] = useState(false);
 
-  // Safety: if still loading after 8s, force past loading state
+  const isLoading = catLoading || entLoading;
+
+  // After 3s of loading, show a "connecting" message instead of plain skeletons
   useEffect(() => {
-    const timer = setTimeout(() => setTimedOut(true), 8000);
+    if (!isLoading) { setSlowLoad(false); return; }
+    const timer = setTimeout(() => setSlowLoad(true), 3000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isLoading]);
 
   const handleRunPipelines = async () => {
     setIsRunning(true);
@@ -66,15 +69,9 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
-  const isLoading = !timedOut && (authLoading || catLoading || entLoading);
   const activeCategories = (categories || []).filter(
     (c: Category) => (entitiesCountByCategory[c.id] || 0) > 0
   );
-
-  // Temporary debug — shows what's stuck if loading hangs
-  const debugInfo = timedOut && !categories
-    ? `auth:${authLoading} user:${!!user} cat:${catLoading} ent:${entLoading} err:${catError}`
-    : null;
 
   return (
     <div className="space-y-6">
@@ -91,16 +88,23 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {debugInfo && (
-        <p className="text-xs text-red-500 font-mono">{debugInfo}</p>
-      )}
-
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-40" />
-          ))}
-        </div>
+        slowLoad ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-3 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Connecting to server...
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-40" />
+            ))}
+          </div>
+        )
       ) : catError ? (
         <Card>
           <CardContent className="py-8 text-center">

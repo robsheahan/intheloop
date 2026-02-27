@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, CheckCheck, Eye } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useAlerts, useMarkSeen, useMarkAllSeen } from '@/lib/hooks/useAlerts';
 import { AlertHistory } from '@/types/database';
@@ -198,7 +197,6 @@ function AlertTable({
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { isLoading: authLoading } = useAuth();
   const { data: categories } = useCategories();
   const { data: alerts, isLoading: alertsLoading } = useAlerts(slug);
   const markSeen = useMarkSeen();
@@ -224,9 +222,7 @@ export default function CategoryPage() {
     }
   };
 
-  const isLoading = authLoading || alertsLoading;
-
-  if (isLoading) {
+  if (alertsLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { useOrderedCategories } from '@/lib/hooks/useOrderedCategories';
 import { useTrackedEntities } from '@/lib/hooks/useTrackedEntities';
 import { useEmailPreferences, useToggleEmailPreference } from '@/lib/hooks/useEmailPreferences';
@@ -15,14 +14,13 @@ import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
 import { Category } from '@/types/database';
 
 export default function TrackedPage() {
-  const { isLoading: authLoading } = useAuth();
   const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: entities, isLoading: entLoading } = useTrackedEntities();
   const { data: emailPrefs } = useEmailPreferences();
   const toggleEmail = useToggleEmailPreference();
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
 
-  if (authLoading || catLoading || entLoading) {
+  if (catLoading || entLoading) {
     return (
       <div className="space-y-6">
         <div>
