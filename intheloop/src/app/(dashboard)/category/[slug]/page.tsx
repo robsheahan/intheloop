@@ -38,7 +38,16 @@ function filterMismatched(alerts: AlertHistory[]): AlertHistory[] {
   });
 }
 
-/** Group all alerts by entity, sort groups by most recent alert, sort alerts within each group newest first */
+/** Extract a sortable date from the alert content, falling back to created_at */
+function getContentDate(a: AlertHistory): number {
+  const c = a.content;
+  if (c.release_date) return new Date(c.release_date as string).getTime();
+  if (c.year) return new Date(`${c.year}-01-01`).getTime();
+  if (c.date) return new Date(c.date as string).getTime();
+  return new Date(a.created_at).getTime();
+}
+
+/** Group all alerts by entity, sort groups by most recent content date, sort alerts within each group newest first */
 function groupByEntity(alerts: AlertHistory[]): EntityGroup[] {
   const map = new Map<string, AlertHistory[]>();
   for (const a of alerts) {
@@ -51,12 +60,12 @@ function groupByEntity(alerts: AlertHistory[]): EntityGroup[] {
     .map(([entityName, groupAlerts]) => ({
       entityName,
       alerts: [...groupAlerts].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        (a, b) => getContentDate(b) - getContentDate(a)
       ),
     }))
     .sort((a, b) => {
-      const aLatest = new Date(a.alerts[0]?.created_at || 0).getTime();
-      const bLatest = new Date(b.alerts[0]?.created_at || 0).getTime();
+      const aLatest = getContentDate(a.alerts[0]);
+      const bLatest = getContentDate(b.alerts[0]);
       return bLatest - aLatest;
     });
 }
