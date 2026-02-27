@@ -38,6 +38,7 @@ function filterMismatched(alerts: AlertHistory[]): AlertHistory[] {
   });
 }
 
+/** Group all alerts by entity, sort groups by most recent alert, sort alerts within each group newest first */
 function groupByEntity(alerts: AlertHistory[]): EntityGroup[] {
   const map = new Map<string, AlertHistory[]>();
   for (const a of alerts) {
@@ -63,7 +64,7 @@ function groupByEntity(alerts: AlertHistory[]): EntityGroup[] {
 function renderTitle(content: Record<string, unknown>, type: string): string {
   switch (type) {
     case 'music':
-      return `${content.title} - ${content.artist}`;
+      return content.title as string;
     case 'books':
       return content.title as string;
     case 'news':
@@ -75,7 +76,7 @@ function renderTitle(content: Record<string, unknown>, type: string): string {
     case 'movies':
       return `${content.title} (${content.media_type})`;
     case 'tours':
-      return `${content.title} - ${content.artist}`;
+      return content.title as string;
     case 'github':
       return `${content.repo}: ${content.tag}`;
     case 'steam':
@@ -96,7 +97,7 @@ function renderTitle(content: Record<string, unknown>, type: string): string {
 function renderDetail(content: Record<string, unknown>, type: string): string {
   switch (type) {
     case 'music':
-      return `${content.release_type} released ${content.release_date ? new Date(content.release_date as string).toLocaleDateString() : ''}`;
+      return `${content.release_type || 'Release'}${content.release_date ? ' — ' + new Date(content.release_date as string).toLocaleDateString() : ''}`;
     case 'books':
       return content.year ? `Published ${content.year}` : '';
     case 'news':
@@ -114,7 +115,7 @@ function renderDetail(content: Record<string, unknown>, type: string): string {
     case 'steam':
       return `Original: $${content.original_price} | Sale: $${content.sale_price}`;
     case 'podcasts':
-      return (content.podcast_name as string) || '';
+      return content.podcast_name as string || '';
     case 'weather':
       return `Value: ${content.value}, Threshold: ${content.threshold}`;
     case 'reddit':
@@ -137,7 +138,6 @@ function AlertTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Entity</TableHead>
           <TableHead>Title</TableHead>
           <TableHead>Detail</TableHead>
           <TableHead className="w-20 text-right">Actions</TableHead>
@@ -154,9 +154,6 @@ function AlertTable({
               key={a.id}
               className={isUnseen ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}
             >
-              <TableCell className="font-semibold">
-                {a.tracked_entity?.entity_name || 'Unknown'}
-              </TableCell>
               <TableCell className="font-medium max-w-[300px] truncate">
                 {renderTitle(a.content, type)}
               </TableCell>
@@ -207,11 +204,8 @@ export default function CategoryPage() {
   const color = getCategoryColor(slug);
 
   const filtered = filterMismatched(alerts || []);
-  const unseenAlerts = [...filtered.filter((a) => !a.seen_at)].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-  const seenAlerts = filtered.filter((a) => a.seen_at);
-  const seenGroups = groupByEntity(seenAlerts);
+  const unseenCount = filtered.filter((a) => !a.seen_at).length;
+  const groups = groupByEntity(filtered);
 
   const handleMarkAllSeen = async () => {
     try {
@@ -255,7 +249,7 @@ export default function CategoryPage() {
             )}
           </div>
         </div>
-        {unseenAlerts.length > 0 && (
+        {unseenCount > 0 && (
           <Button
             size="sm"
             onClick={handleMarkAllSeen}
@@ -267,33 +261,21 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {unseenAlerts.length > 0 && (
-        <div className="space-y-2">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            New ({unseenAlerts.length})
-          </h2>
-          <AlertTable
-            alerts={unseenAlerts}
-            onMarkSeen={(id) => markSeen.mutate(id)}
-          />
-        </div>
-      )}
-
-      {seenGroups.length > 0 && (
-        <div className="space-y-5">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Previous ({seenAlerts.length})
-          </h2>
-          {seenGroups.map((group) => (
+      {groups.length > 0 ? (
+        <div className="space-y-6">
+          {groups.map((group) => (
             <div key={group.entityName} className="space-y-1">
-              <h3 className="text-sm font-semibold">{group.entityName}</h3>
-              <AlertTable alerts={group.alerts} />
+              <h3 className="text-sm font-semibold text-primary">
+                {group.entityName}
+              </h3>
+              <AlertTable
+                alerts={group.alerts}
+                onMarkSeen={(id) => markSeen.mutate(id)}
+              />
             </div>
           ))}
         </div>
-      )}
-
-      {filtered.length === 0 && (
+      ) : (
         <p className="text-muted-foreground text-sm py-4">
           No alerts yet. Tap New Events to check for updates.
         </p>
