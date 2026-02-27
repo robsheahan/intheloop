@@ -1,14 +1,170 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { CheckCheck } from 'lucide-react';
+import { ArrowLeft, CheckCheck, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useAlerts, useMarkSeen, useMarkAllSeen } from '@/lib/hooks/useAlerts';
-import { AlertCard } from '@/components/shared/AlertCard';
+import { AlertHistory } from '@/types/database';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
+
+
+function sortNewestFirst(alerts: AlertHistory[]): AlertHistory[] {
+  return [...alerts].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+}
+
+function renderTitle(content: Record<string, unknown>, type: string): string {
+  switch (type) {
+    case 'music':
+      return `${content.title} - ${content.artist}`;
+    case 'books':
+      return `${content.title} by ${content.author}`;
+    case 'news':
+      return content.title as string;
+    case 'crypto':
+      return `${content.instrument}: $${content.price}`;
+    case 'stocks':
+      return `${content.symbol}: $${content.price}`;
+    case 'movies':
+      return `${content.title} (${content.media_type})`;
+    case 'tours':
+      return `${content.title} - ${content.artist}`;
+    case 'github':
+      return `${content.repo}: ${content.tag}`;
+    case 'steam':
+      return `${content.name}: ${content.discount_percent}% off`;
+    case 'podcasts':
+      return content.episode_title as string;
+    case 'weather':
+      return `${content.city}: ${content.alert_type} alert`;
+    case 'reddit':
+      return content.title as string;
+    case 'currency':
+      return `${content.pair}: ${content.rate}`;
+    default:
+      return (content.title as string) || 'Alert';
+  }
+}
+
+function renderDetail(content: Record<string, unknown>, type: string): string {
+  switch (type) {
+    case 'music':
+      return `${content.release_type} released ${content.release_date ? new Date(content.release_date as string).toLocaleDateString() : ''}`;
+    case 'books':
+      return content.year ? `Published ${content.year}` : '';
+    case 'news':
+      return `Source: ${content.source}`;
+    case 'crypto':
+      return `Price went ${content.direction} target of $${content.target_price}`;
+    case 'stocks':
+      return `Price went ${content.direction} target of $${content.target_price}`;
+    case 'movies':
+      return content.release_date ? `Release: ${content.release_date}` : '';
+    case 'tours':
+      return (content.release_type as string) || '';
+    case 'github':
+      return (content.release_name as string) || '';
+    case 'steam':
+      return `Original: $${content.original_price} | Sale: $${content.sale_price}`;
+    case 'podcasts':
+      return (content.podcast_name as string) || '';
+    case 'weather':
+      return `Value: ${content.value}, Threshold: ${content.threshold}`;
+    case 'reddit':
+      return `r/${content.subreddit} | Score: ${content.score}`;
+    case 'currency':
+      return `Rate went ${content.direction} target of ${content.target_rate}`;
+    default:
+      return (content.description as string) || '';
+  }
+}
+
+function AlertTable({
+  alerts,
+  onMarkSeen,
+}: {
+  alerts: AlertHistory[];
+  onMarkSeen?: (id: string) => void;
+}) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Title</TableHead>
+          <TableHead>Detail</TableHead>
+          <TableHead className="w-16">Status</TableHead>
+          <TableHead className="w-20 text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {alerts.map((a) => {
+          const type = a.content.type as string;
+          const isUnseen = !a.seen_at;
+          const url = typeof a.content.url === 'string' ? a.content.url : null;
+
+          return (
+            <TableRow
+              key={a.id}
+              className={isUnseen ? 'bg-muted/30' : ''}
+            >
+              <TableCell className="font-medium max-w-[300px] truncate">
+                {renderTitle(a.content, type)}
+              </TableCell>
+              <TableCell className="text-muted-foreground max-w-[300px] truncate">
+                {renderDetail(a.content, type)}
+              </TableCell>
+              <TableCell>
+                {isUnseen && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    New
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-1">
+                  {isUnseen && onMarkSeen && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => onMarkSeen(a.id)}
+                    >
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {url && (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:underline"
+                    >
+                      View
+                    </a>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+}
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -23,6 +179,9 @@ export default function CategoryPage() {
 
   const unseenAlerts = (alerts || []).filter((a) => !a.seen_at);
   const seenAlerts = (alerts || []).filter((a) => a.seen_at);
+
+  const sortedUnseen = sortNewestFirst(unseenAlerts);
+  const sortedSeen = sortNewestFirst(seenAlerts);
 
   const handleMarkAllSeen = async () => {
     try {
@@ -46,6 +205,14 @@ export default function CategoryPage() {
 
   return (
     <div className="space-y-6">
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Dashboard
+      </Link>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Icon className="h-6 w-6" style={{ color }} />
@@ -71,29 +238,24 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {unseenAlerts.length > 0 && (
+      {sortedUnseen.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">
-            Unseen ({unseenAlerts.length})
+            Unseen ({sortedUnseen.length})
           </h2>
-          {unseenAlerts.map((a) => (
-            <AlertCard
-              key={a.id}
-              alert={a}
-              onMarkSeen={(id) => markSeen.mutate(id)}
-            />
-          ))}
+          <AlertTable
+            alerts={sortedUnseen}
+            onMarkSeen={(id) => markSeen.mutate(id)}
+          />
         </div>
       )}
 
-      {seenAlerts.length > 0 && (
+      {sortedSeen.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">
-            Previous ({seenAlerts.length})
+            Previous ({sortedSeen.length})
           </h2>
-          {seenAlerts.map((a) => (
-            <AlertCard key={a.id} alert={a} />
-          ))}
+          <AlertTable alerts={sortedSeen} />
         </div>
       )}
 
