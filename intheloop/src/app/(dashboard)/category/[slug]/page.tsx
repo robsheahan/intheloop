@@ -126,14 +126,17 @@ function renderDetail(content: Record<string, unknown>, type: string): string {
 function AlertTable({
   alerts,
   onMarkSeen,
+  showEntity = false,
 }: {
   alerts: AlertHistory[];
   onMarkSeen?: (id: string) => void;
+  showEntity?: boolean;
 }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
+          {showEntity && <TableHead>Entity</TableHead>}
           <TableHead>Title</TableHead>
           <TableHead>Detail</TableHead>
           <TableHead className="w-16">Status</TableHead>
@@ -151,6 +154,11 @@ function AlertTable({
               key={a.id}
               className={isUnseen ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}
             >
+              {showEntity && (
+                <TableCell className="font-semibold">
+                  {a.tracked_entity?.entity_name || 'Unknown'}
+                </TableCell>
+              )}
               <TableCell className="font-medium max-w-[300px] truncate">
                 {renderTitle(a.content, type)}
               </TableCell>
@@ -208,10 +216,10 @@ export default function CategoryPage() {
   const color = getCategoryColor(slug);
 
   const filtered = filterMismatched(alerts || []);
-  const unseenAlerts = filtered.filter((a) => !a.seen_at);
+  const unseenAlerts = [...filtered.filter((a) => !a.seen_at)].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
   const seenAlerts = filtered.filter((a) => a.seen_at);
-
-  const unseenGroups = groupByEntity(unseenAlerts);
   const seenGroups = groupByEntity(seenAlerts);
 
   const handleMarkAllSeen = async () => {
@@ -269,20 +277,16 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {unseenGroups.length > 0 && (
-        <div className="space-y-5">
+      {unseenAlerts.length > 0 && (
+        <div className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">
-            Unseen ({unseenAlerts.length})
+            New ({unseenAlerts.length})
           </h2>
-          {unseenGroups.map((group) => (
-            <div key={group.entityName} className="space-y-1">
-              <h3 className="text-sm font-semibold">{group.entityName}</h3>
-              <AlertTable
-                alerts={group.alerts}
-                onMarkSeen={(id) => markSeen.mutate(id)}
-              />
-            </div>
-          ))}
+          <AlertTable
+            alerts={unseenAlerts}
+            onMarkSeen={(id) => markSeen.mutate(id)}
+            showEntity
+          />
         </div>
       )}
 
