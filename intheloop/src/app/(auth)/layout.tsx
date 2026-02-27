@@ -10,11 +10,11 @@ export default function AuthLayout({
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <Image
-            src="/intheloop.svg"
+            src="/intheloopnew.svg"
             alt="In The Loop"
-            width={260}
-            height={260}
-            className="h-32 w-auto"
+            width={500}
+            height={100}
+            className="h-16 w-auto"
             priority
           />
           <p className="text-sm text-muted-foreground mt-2">

@@ -37,11 +37,11 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Image
-            src="/intheloop.svg"
+            src="/intheloopnew.svg"
             alt="In The Loop"
-            width={200}
-            height={200}
-            className="h-16 w-auto"
+            width={500}
+            height={100}
+            className="h-8 w-auto"
           />
         </Link>
       </SidebarHeader>
