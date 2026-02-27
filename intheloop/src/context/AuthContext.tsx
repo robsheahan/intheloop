@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Session } from '@supabase/supabase-js';
-import { createClient, withTimeout } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { Profile } from '@/types/database';
 
 interface AuthContextType {
@@ -27,13 +27,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await withTimeout(
-      supabase.from('profiles').select('*').eq('id', userId).single()
-    );
-    if (error) {
-      console.error('Failed to fetch profile:', error);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error) {
+        console.error('Failed to fetch profile:', error);
+      }
+      setProfile(data);
+    } catch (err) {
+      console.error('Failed to fetch profile:', err);
     }
-    setProfile(data);
   };
 
   const refreshProfile = async () => {
@@ -47,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const {
           data: { session },
-        } = await withTimeout(supabase.auth.getSession());
+        } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
 
