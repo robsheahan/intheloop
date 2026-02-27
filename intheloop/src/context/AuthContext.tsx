@@ -28,15 +28,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      if (error) {
-        console.error('Failed to fetch profile:', error);
+      const result = await Promise.race([
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 10_000)),
+      ]);
+      if (result && 'data' in result) {
+        if (result.error) {
+          console.error('Failed to fetch profile:', result.error);
+        }
+        setProfile(result.data);
       }
-      setProfile(data);
     } catch (err) {
       console.error('Failed to fetch profile:', err);
     }
@@ -56,13 +57,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
+        setIsLoading(false);
 
+        // Fetch profile in background — don't block page render
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          fetchProfile(session.user.id);
         }
       } catch (err) {
         console.error('Failed to get session:', err);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -71,20 +73,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        setSession(session);
-        setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
 
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
-      } catch (err) {
-        console.error('Auth state change error:', err);
-      } finally {
-        setIsLoading(false);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
       }
     });
 

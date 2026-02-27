@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, queryWithTimeout } from '@/lib/supabase/client';
 import { TrackedEntity } from '@/types/database';
 import { useAuth } from '@/context/AuthContext';
 
@@ -10,7 +10,7 @@ export function useTrackedEntities(categoryId?: string) {
   return useQuery<TrackedEntity[]>({
     queryKey: ['tracked-entities', categoryId],
     enabled: !!user,
-    queryFn: async () => {
+    queryFn: () => {
       let query = supabase
         .from('tracked_entities')
         .select('*, category:categories(*)')
@@ -21,9 +21,7 @@ export function useTrackedEntities(categoryId?: string) {
         query = query.eq('category_id', categoryId);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      return queryWithTimeout<TrackedEntity[]>(query);
     },
   });
 }

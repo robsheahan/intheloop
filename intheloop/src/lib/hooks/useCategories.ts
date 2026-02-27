@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, queryWithTimeout } from '@/lib/supabase/client';
 import { Category } from '@/types/database';
 import { useAuth } from '@/context/AuthContext';
 
@@ -10,13 +10,9 @@ export function useCategories() {
   return useQuery<Category[]>({
     queryKey: ['categories'],
     enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('sort_order');
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () =>
+      queryWithTimeout<Category[]>(
+        supabase.from('categories').select('*').order('sort_order'),
+      ),
   });
 }

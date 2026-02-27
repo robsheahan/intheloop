@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, queryWithTimeout } from '@/lib/supabase/client';
 import { AlertHistory } from '@/types/database';
 import { useAuth } from '@/context/AuthContext';
 
@@ -29,8 +29,7 @@ export function useAlerts(categorySlug?: string, unseenOnly = false, limit?: num
         query = query.limit(limit);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await queryWithTimeout<AlertHistory[]>(query);
 
       // Filter out nulls from the join (when categorySlug filter applied)
       if (categorySlug) {
@@ -51,13 +50,13 @@ export function useUnseenCounts() {
     queryKey: ['unseen-counts'],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('alert_history')
-        .select('tracked_entity:tracked_entities(category:categories(slug))')
-        .eq('user_id', user!.id)
-        .is('seen_at', null);
-
-      if (error) throw error;
+      const data = await queryWithTimeout<Record<string, unknown>[]>(
+        supabase
+          .from('alert_history')
+          .select('tracked_entity:tracked_entities(category:categories(slug))')
+          .eq('user_id', user!.id)
+          .is('seen_at', null),
+      );
 
       const counts: Record<string, number> = {};
       for (const row of data || []) {

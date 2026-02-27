@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, queryWithTimeout } from '@/lib/supabase/client';
 import { CategoryOrder } from '@/types/database';
 import { useAuth } from '@/context/AuthContext';
 
@@ -10,15 +10,14 @@ export function useCategoryOrder() {
   return useQuery<CategoryOrder[]>({
     queryKey: ['category-order'],
     enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('category_order')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('position');
-      if (error) throw error;
-      return data || [];
-    },
+    queryFn: () =>
+      queryWithTimeout<CategoryOrder[]>(
+        supabase
+          .from('category_order')
+          .select('*')
+          .eq('user_id', user!.id)
+          .order('position'),
+      ),
   });
 }
 

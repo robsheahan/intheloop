@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, queryWithTimeout } from '@/lib/supabase/client';
 import { EmailPreference } from '@/types/database';
 import { useAuth } from '@/context/AuthContext';
 
@@ -10,14 +10,10 @@ export function useEmailPreferences() {
   return useQuery<EmailPreference[]>({
     queryKey: ['email-preferences'],
     enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('email_preferences')
-        .select('*')
-        .eq('user_id', user!.id);
-      if (error) throw error;
-      return data || [];
-    },
+    queryFn: () =>
+      queryWithTimeout<EmailPreference[]>(
+        supabase.from('email_preferences').select('*').eq('user_id', user!.id),
+      ),
   });
 }
 
