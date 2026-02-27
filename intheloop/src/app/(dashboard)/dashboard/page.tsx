@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,13 +18,20 @@ import { useMarkSeen } from '@/lib/hooks/useAlerts';
 import { Category } from '@/types/database';
 
 export default function DashboardPage() {
-  const { profile, isLoading: authLoading } = useAuth();
+  const { profile, user, isLoading: authLoading } = useAuth();
   const { data: categories, isLoading: catLoading, isError: catError } = useOrderedCategories();
   const { data: entities, isLoading: entLoading } = useTrackedEntities();
   const { data: alerts } = useAlerts(undefined, true, 30);
   const { data: unseenCounts } = useUnseenCounts();
   const markSeen = useMarkSeen();
   const [isRunning, setIsRunning] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+
+  // Safety: if still loading after 8s, force past loading state
+  useEffect(() => {
+    const timer = setTimeout(() => setTimedOut(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleRunPipelines = async () => {
     setIsRunning(true);
@@ -59,10 +66,15 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
-  const isLoading = authLoading || catLoading || entLoading;
+  const isLoading = !timedOut && (authLoading || catLoading || entLoading);
   const activeCategories = (categories || []).filter(
     (c: Category) => (entitiesCountByCategory[c.id] || 0) > 0
   );
+
+  // Temporary debug — shows what's stuck if loading hangs
+  const debugInfo = timedOut && !categories
+    ? `auth:${authLoading} user:${!!user} cat:${catLoading} ent:${entLoading} err:${catError}`
+    : null;
 
   return (
     <div className="space-y-6">
@@ -78,6 +90,10 @@ export default function DashboardPage() {
           {isRunning ? 'Running...' : 'New Events'}
         </Button>
       </div>
+
+      {debugInfo && (
+        <p className="text-xs text-red-500 font-mono">{debugInfo}</p>
+      )}
 
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
