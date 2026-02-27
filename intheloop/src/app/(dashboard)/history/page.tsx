@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { useAlertHistory, useMarkSeen } from '@/lib/hooks/useAlerts';
 import { AlertCard } from '@/components/shared/AlertCard';
 import { Button } from '@/components/ui/button';
@@ -10,13 +11,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 const PAGE_SIZE = 30;
 
 export default function HistoryPage() {
+  const { isLoading: authLoading } = useAuth();
   const [page, setPage] = useState(0);
-  const { data, isLoading } = useAlertHistory(page, PAGE_SIZE);
+  const { data, isLoading: dataLoading } = useAlertHistory(page, PAGE_SIZE);
   const markSeen = useMarkSeen();
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
 
-  if (isLoading) {
+  if (authLoading || dataLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />

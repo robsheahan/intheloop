@@ -18,7 +18,7 @@ import { useMarkSeen } from '@/lib/hooks/useAlerts';
 import { Category } from '@/types/database';
 
 export default function DashboardPage() {
-  const { profile } = useAuth();
+  const { profile, isLoading: authLoading } = useAuth();
   const { data: categories, isLoading: catLoading, isError: catError } = useOrderedCategories();
   const { data: entities, isLoading: entLoading } = useTrackedEntities();
   const { data: alerts } = useAlerts(undefined, true, 30);
@@ -59,10 +59,10 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
-  const dataReady = !catLoading && !entLoading && categories;
-  const activeCategories = dataReady
-    ? (categories || []).filter((c: Category) => (entitiesCountByCategory[c.id] || 0) > 0)
-    : [];
+  const isLoading = authLoading || catLoading || entLoading;
+  const activeCategories = (categories || []).filter(
+    (c: Category) => (entitiesCountByCategory[c.id] || 0) > 0
+  );
 
   return (
     <div className="space-y-6">
@@ -79,7 +79,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {!dataReady ? (
+      {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-40" />
