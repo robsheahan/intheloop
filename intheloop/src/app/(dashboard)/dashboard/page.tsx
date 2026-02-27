@@ -60,7 +60,7 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
-  if (catLoading || alertsLoading) {
+  if (catLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-64" />
@@ -129,7 +129,9 @@ export default function DashboardPage() {
                   </Link>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {catAlerts.length > 0 ? (
+                  {alertsLoading ? (
+                    <Skeleton className="h-8 w-full" />
+                  ) : catAlerts.length > 0 ? (
                     catAlerts.map((a) => (
                       <AlertCard
                         key={a.id}
