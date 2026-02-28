@@ -1,0 +1,21 @@
+{
+  "name": "@intheloop/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./types/database": "./src/types/database.ts",
+    "./types/pipelines": "./src/types/pipelines.ts",
+    "./pipelines": "./src/pipelines/index.ts",
+    "./pipelines/*": "./src/pipelines/*.ts",
+    "./search": "./src/search/index.ts",
+    "./search/*": "./src/search/*.ts",
+    "./utils/formatting": "./src/utils/formatting.ts",
+    "./utils/category-fields": "./src/utils/category-fields.ts",
+    "./utils/category-colors": "./src/utils/category-colors.ts",
+    "./utils/alert-rendering": "./src/utils/alert-rendering.ts"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  }
+}
