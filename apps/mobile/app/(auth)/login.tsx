@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Logo } from '@/components/Logo';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -46,10 +47,10 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           className="px-6"
         >
-          <View className="mb-8">
-            <Text className="text-3xl font-bold text-foreground">In The Loop</Text>
-            <Text className="text-base text-muted-foreground mt-2">
-              Sign in to your account
+          <View className="items-center mb-8">
+            <Logo height={60} />
+            <Text className="text-sm text-muted-foreground mt-3">
+              Personalized alerts for everything you track
             </Text>
           </View>
 

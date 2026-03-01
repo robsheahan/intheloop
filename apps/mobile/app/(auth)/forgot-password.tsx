@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Logo } from '@/components/Logo';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -49,10 +50,10 @@ export default function ForgotPasswordScreen() {
           keyboardShouldPersistTaps="handled"
           className="px-6"
         >
-          <View className="mb-8">
-            <Text className="text-3xl font-bold text-foreground">Reset password</Text>
-            <Text className="text-base text-muted-foreground mt-2">
-              Enter your email to receive a reset link
+          <View className="items-center mb-8">
+            <Logo height={60} />
+            <Text className="text-sm text-muted-foreground mt-3">
+              Reset your password
             </Text>
           </View>
 
