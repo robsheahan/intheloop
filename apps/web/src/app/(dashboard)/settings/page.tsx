@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useEmailPreferences, useToggleEmailPreference } from '@/lib/hooks/useEmailPreferences';
+import { Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,11 +51,20 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account and notification preferences.
-        </p>
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[oklch(0.38_0.10_250)] to-[oklch(0.30_0.08_250)] p-6 shadow-lg">
+        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-[#ff751f]/15 blur-2xl" />
+        <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-[oklch(0.52_0.11_250)]/20 blur-xl" />
+        <div className="relative flex items-center gap-4">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+            <Settings className="h-6 w-6 text-[#ff751f]" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Settings</h1>
+            <p className="text-sm text-white/70">
+              Manage your account and notification preferences.
+            </p>
+          </div>
+        </div>
       </div>
 
       <Card>

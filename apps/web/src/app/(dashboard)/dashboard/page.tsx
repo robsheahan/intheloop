@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { RefreshCw, Loader2, Bell, CheckCheck } from 'lucide-react';
+import { RefreshCw, Loader2, Bell, CheckCheck, LayoutDashboard } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { useOrderedCategories } from '@/lib/hooks/useOrderedCategories';
@@ -89,17 +89,26 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}.
-          </p>
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[oklch(0.38_0.10_250)] to-[oklch(0.30_0.08_250)] p-6 shadow-lg">
+        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-[#ff751f]/15 blur-2xl" />
+        <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-[oklch(0.52_0.11_250)]/20 blur-xl" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+              <LayoutDashboard className="h-6 w-6 text-[#ff751f]" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+              <p className="text-sm text-white/70">
+                Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}.
+              </p>
+            </div>
+          </div>
+          <Button onClick={handleRunPipelines} disabled={isRunning} size="sm" className="bg-[#ff751f] hover:bg-[#e5681c] text-white shadow-md hover:shadow-lg transition-all">
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
+            {isRunning ? 'Running...' : 'New Events'}
+          </Button>
         </div>
-        <Button onClick={handleRunPipelines} disabled={isRunning} size="sm" className="bg-[#ff751f] hover:bg-[#e5681c] text-white shadow-md hover:shadow-lg transition-all">
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
-          {isRunning ? 'Running...' : 'New Events'}
-        </Button>
       </div>
 
       {isLoading ? (

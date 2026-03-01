@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Clock } from 'lucide-react-native';
 import { useAlertHistory, useMarkSeen } from '@/hooks/useAlerts';
 import { successNotification } from '@/lib/haptics';
 import { AlertCard } from '@/components/AlertCard';
@@ -42,13 +43,20 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <View className="px-4 mt-2 mb-3">
-        <Text className="text-2xl font-bold text-foreground">History</Text>
-        {data && (
-          <Text className="text-sm text-muted-foreground">
-            {data.total} total alert{data.total !== 1 ? 's' : ''}
-          </Text>
-        )}
+      <View className="px-4 mt-4 mb-3">
+        <View className="rounded-xl bg-[#2d4a7a] p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
+          <View className="flex-row items-center gap-3">
+            <View className="h-10 w-10 rounded-lg bg-white/10 items-center justify-center">
+              <Clock size={22} color="#ff751f" />
+            </View>
+            <View>
+              <Text className="text-xl font-bold text-white">History</Text>
+              <Text className="text-sm text-white/70">
+                {data ? `${data.total} total alert${data.total !== 1 ? 's' : ''}` : 'Loading alerts...'}
+              </Text>
+            </View>
+          </View>
+        </View>
       </View>
 
       {isLoading && !data ? (

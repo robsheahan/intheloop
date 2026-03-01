@@ -15,6 +15,15 @@ export async function POST(request: NextRequest) {
 
   if (authHeader === `Bearer ${cronSecret}` && cronSecret) {
     triggeredBy = 'cron';
+  } else if (authHeader?.startsWith('Bearer ')) {
+    // Mobile app: verify Supabase JWT token
+    const token = authHeader.slice(7);
+    const adminForAuth = createAdminClient();
+    const { data: { user }, error } = await adminForAuth.auth.getUser(token);
+    if (!user || error) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    triggeredBy = `user:${user.id}`;
   } else {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

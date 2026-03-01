@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useAlertHistory, useMarkSeen } from '@/lib/hooks/useAlerts';
 import { AlertCard } from '@/components/shared/AlertCard';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ export default function HistoryPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-24 rounded-xl" />
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-20" />
         ))}
@@ -29,12 +29,21 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Alert History</h1>
-        <p className="text-muted-foreground">
-          Browse all past alerts across every category.
-          {data && ` ${data.total} total alerts.`}
-        </p>
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[oklch(0.38_0.10_250)] to-[oklch(0.30_0.08_250)] p-6 shadow-lg">
+        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-[#ff751f]/15 blur-2xl" />
+        <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-[oklch(0.52_0.11_250)]/20 blur-xl" />
+        <div className="relative flex items-center gap-4">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+            <Clock className="h-6 w-6 text-[#ff751f]" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Alert History</h1>
+            <p className="text-sm text-white/70">
+              Browse all past alerts across every category.
+              {data && ` ${data.total} total alerts.`}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-2">

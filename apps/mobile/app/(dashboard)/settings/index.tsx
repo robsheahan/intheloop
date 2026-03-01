@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Settings } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
 import { supabase } from '@/lib/supabase/client';
@@ -44,7 +45,19 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <ScrollView className="flex-1 px-4">
-        <Text className="text-2xl font-bold text-foreground mt-2 mb-4">Settings</Text>
+        <View className="rounded-xl bg-[#2d4a7a] p-5 mt-4 mb-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
+          <View className="flex-row items-center gap-3">
+            <View className="h-10 w-10 rounded-lg bg-white/10 items-center justify-center">
+              <Settings size={22} color="#ff751f" />
+            </View>
+            <View>
+              <Text className="text-xl font-bold text-white">Settings</Text>
+              <Text className="text-sm text-white/70">
+                Manage your account and preferences.
+              </Text>
+            </View>
+          </View>
+        </View>
 
         <Card className="mb-4">
           <CardHeader>

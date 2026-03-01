@@ -56,17 +56,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await withTimeout(
-      supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-    );
-    if (error) {
-      console.error('Failed to fetch profile:', error);
+    try {
+      const { data, error } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
+      );
+      if (error) {
+        console.warn('Failed to fetch profile:', error.message);
+      }
+      setProfile(data);
+    } catch {
+      // Timeout — profile will load on next attempt
     }
-    setProfile(data);
   };
 
   const refreshProfile = async () => {
