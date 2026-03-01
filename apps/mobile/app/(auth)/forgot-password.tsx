@@ -51,7 +51,7 @@ export default function ForgotPasswordScreen() {
           className="px-6"
         >
           <View className="items-center mb-8">
-            <Logo height={60} />
+            <Logo height={120} />
             <Text className="text-sm text-muted-foreground mt-3">
               Reset your password
             </Text>

@@ -57,7 +57,7 @@ export default function SignupScreen() {
           className="px-6"
         >
           <View className="items-center mb-8">
-            <Logo height={80} />
+            <Logo height={120} />
             <Text className="text-sm text-muted-foreground mt-3">
               Create your account
             </Text>
