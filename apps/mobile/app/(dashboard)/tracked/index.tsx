@@ -8,6 +8,7 @@ import { useTrackedEntities, useAddTrackedEntity, useRemoveTrackedEntity } from 
 import { getCategoryIcon } from '@/lib/category-icons';
 import { getCategoryColor } from '@intheloop/shared/utils/category-colors';
 import { CATEGORY_FORM_CONFIGS } from '@intheloop/shared/utils/category-fields';
+import { useAuth } from '@/context/AuthContext';
 import { Category, TrackedEntity } from '@intheloop/shared/types/database';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -16,6 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { TrackedSkeleton } from '@/components/ui/Skeleton';
 
 export default function TrackedScreen() {
+  const { profile } = useAuth();
   const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: allEntities, isLoading: entitiesLoading, refetch: refetchEntities } = useTrackedEntities();
   const addEntity = useAddTrackedEntity();
@@ -129,8 +131,8 @@ export default function TrackedScreen() {
                             <Text className="text-sm text-foreground">{entity.entity_name}</Text>
                             {Object.keys(entity.entity_metadata || {}).length > 0 && (
                               <Text className="text-xs text-muted-foreground">
-                                {Object.entries(entity.entity_metadata)
-                                  .map(([k, v]) => `${k}: ${v}`)
+                                {Object.values(entity.entity_metadata)
+                                  .filter(Boolean)
                                   .join(', ')}
                               </Text>
                             )}
@@ -205,7 +207,11 @@ export default function TrackedScreen() {
                           onPress={() => {
                             setAddingTo(cat.id);
                             setEntityName('');
-                            setFieldValues({});
+                            const prefill: Record<string, string> = {};
+                            if (config?.fields.some((f) => f.name === 'city') && profile?.default_city) {
+                              prefill.city = profile.default_city;
+                            }
+                            setFieldValues(prefill);
                           }}
                           className="flex-row items-center gap-1 mt-3"
                         >

@@ -31,6 +31,7 @@ export async function checkMusic(ctx: PipelineContext): Promise<PipelineResult[]
           entity_name: artist,
           tracked_entity_id: entity.id,
           dedup_key: dedupKey,
+          event_date: item.releaseDate,
           content: {
             type: 'music',
             title,

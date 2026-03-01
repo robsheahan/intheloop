@@ -13,7 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const AUTOCOMPLETE_CATEGORIES = new Set([
   'music', 'tours', 'books', 'crypto', 'stocks', 'movies',
-  'github', 'steam', 'podcasts', 'weather', 'currency',
+  'github', 'steam', 'weather', 'currency',
 ]);
 
 const STRICT_AUTOCOMPLETE_CATEGORIES = new Set([
@@ -124,6 +124,7 @@ export function AddEntityForm({ category, onSuccess }: Props) {
               placeholder={field.placeholder}
               categorySlug={field.searchSlug}
               strict={field.required}
+              initialSelected={!!fieldSelected[field.name]}
               onSelectionChange={(selected) =>
                 setFieldSelected((prev) => ({ ...prev, [field.name]: selected }))
               }

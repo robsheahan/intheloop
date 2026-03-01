@@ -19,7 +19,7 @@ export function renderAlertTitle(content: Record<string, unknown>, type: string)
     case 'steam':
       return `${content.name}: ${content.discount_percent}% off`;
     case 'podcasts':
-      return content.episode_title as string;
+      return `${content.episode_title} — ${content.podcast_name}`;
     case 'weather':
       return `${content.city}: ${content.alert_type} alert`;
     case 'reddit':
@@ -46,13 +46,16 @@ export function renderAlertDescription(content: Record<string, unknown>, type: s
     case 'movies':
       return content.release_date ? `Release: ${content.release_date}` : '';
     case 'tours':
-      return content.release_type as string || '';
+      return [
+        content.date ? new Date(content.date as string).toLocaleDateString() : '',
+        content.country as string || '',
+      ].filter(Boolean).join(' · ');
     case 'github':
       return (content.release_name as string) || '';
     case 'steam':
       return `Original: $${content.original_price} | Sale: $${content.sale_price}`;
     case 'podcasts':
-      return content.podcast_name as string || '';
+      return content.published ? new Date(content.published as string).toLocaleDateString() : '';
     case 'weather':
       return `Value: ${content.value}, Threshold: ${content.threshold}`;
     case 'reddit':

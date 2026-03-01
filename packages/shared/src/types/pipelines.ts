@@ -3,6 +3,7 @@ export interface PipelineResult {
   tracked_entity_id: string;
   content: Record<string, unknown>;
   dedup_key: string;
+  event_date?: string;
 }
 
 export interface PipelineEntity {
@@ -10,6 +11,7 @@ export interface PipelineEntity {
   entity_name: string;
   entity_metadata: Record<string, unknown>;
   user_id: string;
+  created_at: string;
 }
 
 export interface PipelineContext {

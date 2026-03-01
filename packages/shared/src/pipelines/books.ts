@@ -31,6 +31,7 @@ export async function checkBooks(ctx: PipelineContext): Promise<PipelineResult[]
           entity_name: author,
           tracked_entity_id: entity.id,
           dedup_key: dedupKey,
+          event_date: vi.publishedDate,
           content: {
             type: 'books',
             title: vi.title,

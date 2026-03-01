@@ -1,7 +1,7 @@
 import { PipelineContext, PipelineResult } from './types';
 
-const MUSICBRAINZ_URL = 'https://musicbrainz.org/ws/2/release';
-const USER_AGENT = 'InTheLoop/1.0 (personal project)';
+const BANDSINTOWN_URL = 'https://rest.bandsintown.com/artists';
+const APP_ID = 'intheloop';
 
 export async function checkTours(ctx: PipelineContext): Promise<PipelineResult[]> {
   const results: PipelineResult[] = [];
@@ -10,31 +10,31 @@ export async function checkTours(ctx: PipelineContext): Promise<PipelineResult[]
     const filterCity = ((entity.entity_metadata.city as string) || '').toLowerCase();
 
     try {
-      let items = await fetchEvents(entity.entity_name);
+      let events = await fetchEvents(entity.entity_name);
 
       if (filterCity) {
-        items = items.filter((item) =>
-          item.city.toLowerCase().includes(filterCity)
+        events = events.filter((event) =>
+          event.city.toLowerCase().includes(filterCity)
         );
       }
 
-      for (const item of items) {
-        const dedupKey = `${entity.entity_name}|${item.venue}|${item.date}`;
+      for (const event of events) {
+        const dedupKey = `${entity.entity_name}|${event.venue}|${event.date}`;
 
         results.push({
           entity_name: entity.entity_name,
           tracked_entity_id: entity.id,
           dedup_key: dedupKey,
+          event_date: event.date,
           content: {
             type: 'tours',
             artist: entity.entity_name,
-            title: item.venue,
-            venue: item.venue,
-            city: item.city,
-            country: item.country,
-            date: item.date,
-            url: item.link,
-            release_type: 'single/live',
+            title: `${event.venue}, ${event.city}`,
+            venue: event.venue,
+            city: event.city,
+            country: event.country,
+            date: event.date,
+            url: event.link,
           },
         });
       }
@@ -54,41 +54,34 @@ interface TourEvent {
   link: string;
 }
 
-async function fetchEvents(artistName: string): Promise<TourEvent[]> {
-  const params = new URLSearchParams({
-    query: `artist:"${artistName}"`,
-    type: 'single',
-    limit: '10',
-    fmt: 'json',
-  });
+interface BandsintownEvent {
+  datetime: string;
+  venue: {
+    name: string;
+    city: string;
+    region: string;
+    country: string;
+  };
+  url: string;
+  lineup: string[];
+}
 
-  const res = await fetch(`${MUSICBRAINZ_URL}?${params}`, {
-    headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-    signal: AbortSignal.timeout(15000),
-  });
+async function fetchEvents(artistName: string): Promise<TourEvent[]> {
+  const encodedArtist = encodeURIComponent(artistName);
+  const res = await fetch(
+    `${BANDSINTOWN_URL}/${encodedArtist}/events?app_id=${APP_ID}`,
+    { signal: AbortSignal.timeout(15000) }
+  );
   if (!res.ok) return [];
 
-  const data = await res.json();
-  const events: TourEvent[] = [];
+  const data: BandsintownEvent[] = await res.json();
+  if (!Array.isArray(data)) return [];
 
-  for (const release of data.releases || []) {
-    const artistCredit = release['artist-credit'] || [];
-    const matched = artistCredit.some(
-      (ac: Record<string, unknown>) =>
-        (ac.name as string || '').toLowerCase().includes(artistName.toLowerCase()) ||
-        ((ac.artist as Record<string, unknown>)?.name as string || '').toLowerCase().includes(artistName.toLowerCase())
-    );
-    if (!matched) continue;
-
-    const mbid = release.id || '';
-    events.push({
-      venue: release.title || 'Unknown Release',
-      city: release.country || '',
-      country: '',
-      date: release.date || '',
-      link: mbid ? `https://musicbrainz.org/release/${mbid}` : '',
-    });
-  }
-
-  return events;
+  return data.map((event) => ({
+    venue: event.venue?.name || 'Unknown Venue',
+    city: event.venue?.city || '',
+    country: event.venue?.country || '',
+    date: event.datetime || '',
+    link: event.url || '',
+  }));
 }

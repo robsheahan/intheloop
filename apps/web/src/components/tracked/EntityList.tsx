@@ -41,9 +41,8 @@ export function EntityList({ entities }: Props) {
             <span className="text-sm font-medium">{entity.entity_name}</span>
             {Object.keys(entity.entity_metadata).length > 0 && (
               <span className="ml-2 text-xs text-muted-foreground">
-                {Object.entries(entity.entity_metadata)
-                  .filter(([, v]) => v)
-                  .map(([k, v]) => `${k}: ${v}`)
+                {Object.values(entity.entity_metadata)
+                  .filter(Boolean)
                   .join(', ')}
               </span>
             )}

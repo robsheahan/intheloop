@@ -23,6 +23,7 @@ export async function checkMovies(ctx: PipelineContext): Promise<PipelineResult[
           entity_name: entity.entity_name,
           tracked_entity_id: entity.id,
           dedup_key: dedupKey,
+          event_date: item.release_date,
           content: {
             type: 'movies',
             person: entity.entity_name,

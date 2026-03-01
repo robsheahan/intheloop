@@ -12,6 +12,7 @@ interface Props {
   disabled?: boolean;
   strict?: boolean;
   onSelectionChange?: (selected: boolean) => void;
+  initialSelected?: boolean;
 }
 
 export function AutocompleteInput({
@@ -22,12 +23,13 @@ export function AutocompleteInput({
   disabled,
   strict,
   onSelectionChange,
+  initialSelected = false,
 }: Props) {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [wasSelected, setWasSelected] = useState(false);
+  const [wasSelected, setWasSelected] = useState(initialSelected);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 

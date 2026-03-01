@@ -6,7 +6,7 @@ import { searchStocks } from './stocks';
 import { searchMovies } from './movies';
 import { searchGithub } from './github';
 import { searchSteam } from './steam';
-import { searchPodcasts } from './podcasts';
+
 import { searchWeather } from './weather';
 import { searchCurrency } from './currency';
 
@@ -20,7 +20,6 @@ const SEARCH_MAP: Record<string, SearchFunction> = {
   movies: searchMovies,
   github: searchGithub,
   steam: searchSteam,
-  podcasts: searchPodcasts,
   weather: searchWeather,
   currency: searchCurrency,
   cities: searchWeather,

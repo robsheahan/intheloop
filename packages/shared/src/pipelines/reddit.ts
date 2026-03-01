@@ -19,6 +19,7 @@ export async function checkReddit(ctx: PipelineContext): Promise<PipelineResult[
           entity_name: keyword,
           tracked_entity_id: entity.id,
           dedup_key: dedupKey,
+          event_date: post.createdUtc ? new Date(post.createdUtc * 1000).toISOString() : undefined,
           content: {
             type: 'reddit',
             keyword,
@@ -46,6 +47,7 @@ interface RedditPost {
   numComments: number;
   author: string;
   link: string;
+  createdUtc: number;
 }
 
 async function fetchPosts(keyword: string, subreddit: string): Promise<RedditPost[]> {
@@ -82,6 +84,7 @@ async function fetchPosts(keyword: string, subreddit: string): Promise<RedditPos
       numComments: post.num_comments || 0,
       author: post.author || '',
       link: `https://reddit.com${post.permalink || ''}`,
+      createdUtc: post.created_utc || 0,
     });
   }
 

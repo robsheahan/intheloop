@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       // Get all tracked entities for this category across all users
       const { data: entities } = await admin
         .from('tracked_entities')
-        .select('id, entity_name, entity_metadata, user_id')
+        .select('id, entity_name, entity_metadata, user_id, created_at')
         .eq('category_id', category.id);
 
       if (!entities || entities.length === 0) {
@@ -88,6 +88,13 @@ export async function POST(request: NextRequest) {
           for (const result of results) {
             const entity = userEntities.find((e) => e.id === result.tracked_entity_id);
             if (!entity) continue;
+
+            // Skip historical events that occurred before the user started tracking
+            if (result.event_date) {
+              const eventDate = new Date(result.event_date);
+              const trackedSince = new Date(entity.created_at);
+              if (eventDate < trackedSince) continue;
+            }
 
             const { error: insertError } = await admin
               .from('alert_history')

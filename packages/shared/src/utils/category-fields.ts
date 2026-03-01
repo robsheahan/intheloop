@@ -109,8 +109,8 @@ export const CATEGORY_FORM_CONFIGS: Record<string, CategoryFormConfig> = {
     fields: [],
   },
   podcasts: {
-    entityLabel: 'Podcast name',
-    entityPlaceholder: 'e.g. Lex Fridman Podcast',
+    entityLabel: 'Person name',
+    entityPlaceholder: 'e.g. Elon Musk',
     fields: [],
   },
   weather: {

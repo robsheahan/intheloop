@@ -17,6 +17,7 @@ export async function checkNews(ctx: PipelineContext): Promise<PipelineResult[]>
           entity_name: keyword,
           tracked_entity_id: entity.id,
           dedup_key: dedupKey,
+          event_date: article.pubDate || undefined,
           content: {
             type: 'news',
             title: article.title,

@@ -17,6 +17,7 @@ export async function checkGithub(ctx: PipelineContext): Promise<PipelineResult[
           entity_name: repo,
           tracked_entity_id: entity.id,
           dedup_key: dedupKey,
+          event_date: rel.published,
           content: {
             type: 'github',
             repo,

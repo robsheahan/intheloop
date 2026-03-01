@@ -1,26 +1,27 @@
 import { PipelineContext, PipelineResult } from './types';
 
 const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search';
-const ITUNES_LOOKUP_URL = 'https://itunes.apple.com/lookup';
 
 export async function checkPodcasts(ctx: PipelineContext): Promise<PipelineResult[]> {
   const results: PipelineResult[] = [];
 
   for (const entity of ctx.entities) {
-    const podcastName = entity.entity_name;
+    const personName = entity.entity_name;
 
     try {
-      const episodes = await fetchEpisodes(podcastName);
+      const episodes = await fetchGuestEpisodes(personName);
       for (const ep of episodes) {
-        const dedupKey = `${podcastName}|${ep.episodeTitle}`;
+        const dedupKey = `${personName}|${ep.podcastName}|${ep.episodeTitle}`;
 
         results.push({
-          entity_name: podcastName,
+          entity_name: personName,
           tracked_entity_id: entity.id,
           dedup_key: dedupKey,
+          event_date: ep.published,
           content: {
             type: 'podcasts',
-            podcast_name: podcastName,
+            person: personName,
+            podcast_name: ep.podcastName,
             episode_title: ep.episodeTitle,
             published: ep.published,
             duration_ms: ep.durationMs,
@@ -29,60 +30,53 @@ export async function checkPodcasts(ctx: PipelineContext): Promise<PipelineResul
         });
       }
     } catch (err) {
-      console.error(`Podcasts pipeline error for "${podcastName}":`, err);
+      console.error(`Podcasts pipeline error for "${personName}":`, err);
     }
   }
 
   return results;
 }
 
-interface PodcastEpisode {
+interface GuestEpisode {
+  podcastName: string;
   episodeTitle: string;
   published: string;
   durationMs: number;
   link: string;
 }
 
-async function fetchEpisodes(podcastName: string): Promise<PodcastEpisode[]> {
-  const searchParams = new URLSearchParams({
-    term: podcastName,
-    media: 'podcast',
-    entity: 'podcast',
-    limit: '1',
-  });
-
-  const searchRes = await fetch(`${ITUNES_SEARCH_URL}?${searchParams}`, {
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!searchRes.ok) return [];
-
-  const searchData = await searchRes.json();
-  const podcasts = searchData.results || [];
-  if (podcasts.length === 0) return [];
-
-  const collectionId = podcasts[0].collectionId;
-  if (!collectionId) return [];
-
-  const lookupParams = new URLSearchParams({
-    id: String(collectionId),
+async function fetchGuestEpisodes(personName: string): Promise<GuestEpisode[]> {
+  const params = new URLSearchParams({
+    term: personName,
     media: 'podcast',
     entity: 'podcastEpisode',
-    limit: '10',
+    limit: '20',
   });
 
-  const lookupRes = await fetch(`${ITUNES_LOOKUP_URL}?${lookupParams}`, {
+  const res = await fetch(`${ITUNES_SEARCH_URL}?${params}`, {
     signal: AbortSignal.timeout(15000),
   });
-  if (!lookupRes.ok) return [];
+  if (!res.ok) return [];
 
-  const lookupData = await lookupRes.json();
-  const episodes: PodcastEpisode[] = [];
+  const data = await res.json();
+  const episodes: GuestEpisode[] = [];
+  const nameLower = personName.toLowerCase();
 
-  for (const item of lookupData.results || []) {
+  for (const item of data.results || []) {
     if (item.wrapperType !== 'podcastEpisode') continue;
 
+    const title = (item.trackName || '') as string;
+    const description = (item.description || item.shortDescription || '') as string;
+
+    // Only include episodes where the person's name appears in the title or description
+    if (
+      !title.toLowerCase().includes(nameLower) &&
+      !description.toLowerCase().includes(nameLower)
+    ) continue;
+
     episodes.push({
-      episodeTitle: item.trackName || '',
+      podcastName: item.collectionName || '',
+      episodeTitle: title,
       published: item.releaseDate || '',
       durationMs: item.trackTimeMillis || 0,
       link: item.trackViewUrl || '',
