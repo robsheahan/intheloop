@@ -3,9 +3,9 @@
 import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertHistory } from '@intheloop/shared/types/database';
-import { formatRelativeTime } from '@intheloop/shared/utils/formatting';
-import { renderAlertTitle, renderAlertDescription } from '@intheloop/shared/utils/alert-rendering';
+import { AlertHistory } from '@tmw/shared/types/database';
+import { formatRelativeTime } from '@tmw/shared/utils/formatting';
+import { renderAlertTitle, renderAlertDescription } from '@tmw/shared/utils/alert-rendering';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
 
 interface Props {

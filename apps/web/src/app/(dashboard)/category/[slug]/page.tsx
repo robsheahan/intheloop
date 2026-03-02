@@ -7,7 +7,7 @@ import { ArrowLeft, CheckCheck, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCategories } from '@/lib/hooks/useCategories';
 import { useAlerts, useMarkSeen, useMarkAllSeen } from '@/lib/hooks/useAlerts';
-import { AlertHistory } from '@intheloop/shared/types/database';
+import { AlertHistory } from '@tmw/shared/types/database';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -84,6 +84,9 @@ function renderTitle(content: Record<string, unknown>, type: string): string {
     case 'stocks':
       return `${content.symbol}: $${content.price}`;
     case 'movies':
+      if (content.track_mode === 'title') {
+        return `${content.title}`;
+      }
       return `${content.title} (${content.media_type})`;
     case 'tours':
       return content.title as string;
@@ -117,6 +120,12 @@ function renderDetail(content: Record<string, unknown>, type: string): string {
     case 'stocks':
       return `Price went ${content.direction} target of $${content.target_price}`;
     case 'movies':
+      if (content.track_mode === 'title') {
+        const parts: string[] = [];
+        if (content.release_type) parts.push(content.release_type as string);
+        if (content.release_date) parts.push(content.release_date as string);
+        return parts.join(': ') || '';
+      }
       return content.release_date ? `Release: ${content.release_date}` : '';
     case 'tours':
       return (content.release_type as string) || '';

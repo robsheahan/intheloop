@@ -37,8 +37,8 @@ export function AppSidebar() {
       <SidebarHeader className="p-4 bg-white border-b border-sidebar-border">
         <Link href="/dashboard" className="flex justify-center">
           <Image
-            src="/intheloopnew.svg"
-            alt="In The Loop"
+            src="/tmwlogo.svg"
+            alt="Tell Me When"
             width={500}
             height={100}
             className="h-14 w-auto"

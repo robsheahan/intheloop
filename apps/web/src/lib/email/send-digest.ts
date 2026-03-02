@@ -32,7 +32,7 @@ export async function sendDigestEmails(runStartedAt: string): Promise<{
   errors: string[];
 }> {
   const resendKey = process.env.RESEND_API_KEY;
-  const emailFrom = process.env.EMAIL_FROM ?? 'In The Loop <onboarding@resend.dev>';
+  const emailFrom = process.env.EMAIL_FROM ?? 'Tell Me When <onboarding@resend.dev>';
 
   if (!resendKey) {
     return { sent: 0, skipped: 0, errors: ['Missing RESEND_API_KEY'] };
@@ -151,7 +151,7 @@ export async function sendDigestEmails(runStartedAt: string): Promise<{
     const { error } = await resend.emails.send({
       from: emailFrom,
       to: email,
-      subject: `In The Loop: ${totalAlerts} new alert${totalAlerts === 1 ? '' : 's'}`,
+      subject: `Tell Me When: ${totalAlerts} new alert${totalAlerts === 1 ? '' : 's'}`,
       html,
     });
 

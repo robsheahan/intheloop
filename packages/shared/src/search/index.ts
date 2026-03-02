@@ -9,6 +9,7 @@ import { searchSteam } from './steam';
 
 import { searchWeather } from './weather';
 import { searchCurrency } from './currency';
+import { searchMovieTitles } from './movie-titles';
 
 // Tours uses the same artist search as music
 const SEARCH_MAP: Record<string, SearchFunction> = {
@@ -23,6 +24,7 @@ const SEARCH_MAP: Record<string, SearchFunction> = {
   weather: searchWeather,
   currency: searchCurrency,
   cities: searchWeather,
+  'movie-titles': searchMovieTitles,
   // news and reddit are freeform keywords — no search
 };
 

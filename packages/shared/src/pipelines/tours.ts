@@ -1,7 +1,7 @@
 import { PipelineContext, PipelineResult } from './types';
 
 const BANDSINTOWN_URL = 'https://rest.bandsintown.com/artists';
-const APP_ID = 'intheloop';
+const APP_ID = 'tellmewhen';
 
 export async function checkTours(ctx: PipelineContext): Promise<PipelineResult[]> {
   const results: PipelineResult[] = [];

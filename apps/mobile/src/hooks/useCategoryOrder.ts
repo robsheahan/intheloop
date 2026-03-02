@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase, withTimeout } from '@/lib/supabase/client';
-import { CategoryOrder } from '@intheloop/shared/types/database';
+import { CategoryOrder } from '@tmw/shared/types/database';
 import { useAuth } from '@/context/AuthContext';
 
 export function useCategoryOrder() {

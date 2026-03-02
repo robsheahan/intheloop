@@ -5,7 +5,7 @@ import { Clock } from 'lucide-react-native';
 import { useAlertHistory, useMarkSeen } from '@/hooks/useAlerts';
 import { successNotification } from '@/lib/haptics';
 import { AlertCard } from '@/components/AlertCard';
-import { AlertHistory } from '@intheloop/shared/types/database';
+import { AlertHistory } from '@tmw/shared/types/database';
 import { AlertCardSkeleton } from '@/components/ui/Skeleton';
 
 const PAGE_SIZE = 30;

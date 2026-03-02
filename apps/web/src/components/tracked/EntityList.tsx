@@ -3,7 +3,7 @@
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { TrackedEntity } from '@intheloop/shared/types/database';
+import { TrackedEntity } from '@tmw/shared/types/database';
 import { useRemoveTrackedEntity } from '@/lib/hooks/useTrackedEntities';
 
 interface Props {

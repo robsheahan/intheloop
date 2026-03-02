@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { OAuthButtons } from '@/components/auth/oauth-buttons';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -70,6 +71,9 @@ export default function SignupPage() {
       <CardHeader>
         <CardTitle>Create account</CardTitle>
       </CardHeader>
+      <CardContent>
+        <OAuthButtons disabled={isLoading} />
+      </CardContent>
       <form onSubmit={handleSignup}>
         <CardContent className="space-y-4">
           {error && (

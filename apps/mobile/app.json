@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "In The Loop",
+    "name": "Tell Me When",
     "slug": "intheloop-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,17 +15,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.intheloop.app",
+      "bundleIdentifier": "com.robsheahan.intheloop",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.intheloop.app",
+      "package": "com.robsheahan.intheloop",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -40,11 +41,15 @@
           "icon": "./assets/icon.png",
           "color": "#ff751f"
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      "expo-web-browser"
     ],
     "extra": {
       "router": {},
-      "eas": {}
+      "eas": {
+        "projectId": "3bc809b9-daf6-4199-9a8d-4d6c3f5fa469"
+      }
     },
     "owner": "robsheahan"
   }

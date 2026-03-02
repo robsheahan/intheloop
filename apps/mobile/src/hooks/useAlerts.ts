@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, withTimeout } from '@/lib/supabase/client';
-import { AlertHistory } from '@intheloop/shared/types/database';
+import { AlertHistory } from '@tmw/shared/types/database';
 import { useAuth } from '@/context/AuthContext';
 
 export function useAlerts(categorySlug?: string, unseenOnly = false, limit?: number) {

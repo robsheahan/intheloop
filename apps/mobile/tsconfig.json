@@ -5,8 +5,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@intheloop/shared": ["../../packages/shared/src/index.ts"],
-      "@intheloop/shared/*": ["../../packages/shared/src/*"]
+      "@tmw/shared": ["../../packages/shared/src/index.ts"],
+      "@tmw/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"]

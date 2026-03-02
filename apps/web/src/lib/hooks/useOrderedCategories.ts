@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useCategories } from './useCategories';
 import { useCategoryOrder } from './useCategoryOrder';
-import { Category } from '@intheloop/shared/types/database';
+import { Category } from '@tmw/shared/types/database';
 
 export function useOrderedCategories() {
   const { data: categories, isLoading: catLoading, isError: catError } = useCategories();

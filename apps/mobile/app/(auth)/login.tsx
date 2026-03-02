@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/Logo';
+import { OAuthButtons } from '@/components/auth/OAuthButtons';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -55,6 +56,11 @@ export default function LoginScreen() {
           </View>
 
           <View className="gap-4">
+            <OAuthButtons
+              onError={(msg) => setError(msg)}
+              disabled={loading}
+            />
+
             <Input
               label="Email"
               value={email}

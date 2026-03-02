@@ -27,6 +27,8 @@ build/
 # misc
 .DS_Store
 *.pem
+*.p8
+keys/
 
 # debug
 npm-debug.log*

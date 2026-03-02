@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient, queryWithTimeout } from '@/lib/supabase/client';
-import { TrackedEntity } from '@intheloop/shared/types/database';
+import { TrackedEntity } from '@tmw/shared/types/database';
 import { useAuth } from '@/context/AuthContext';
 
 export function useTrackedEntities(categoryId?: string) {

@@ -10,8 +10,8 @@ export default function AuthLayout({
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <Image
-            src="/intheloopnew.svg"
-            alt="In The Loop"
+            src="/tmwlogo.svg"
+            alt="Tell Me When"
             width={500}
             height={100}
             className="h-20 w-auto"

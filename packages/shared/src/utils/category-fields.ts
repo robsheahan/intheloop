@@ -6,12 +6,20 @@ export interface CategoryField {
   required?: boolean;
   options?: { label: string; value: string }[];
   searchSlug?: string;
+  visibleWhen?: { field: string; value: string };
+}
+
+export interface EntityOverride {
+  entityLabel: string;
+  entityPlaceholder: string;
+  searchSlug?: string;
 }
 
 export interface CategoryFormConfig {
   entityLabel: string;
   entityPlaceholder: string;
   fields: CategoryField[];
+  entityOverrides?: Record<string, EntityOverride>;
 }
 
 export const CATEGORY_FORM_CONFIGS: Record<string, CategoryFormConfig> = {
@@ -82,6 +90,16 @@ export const CATEGORY_FORM_CONFIGS: Record<string, CategoryFormConfig> = {
     entityPlaceholder: 'e.g. Christopher Nolan',
     fields: [
       {
+        name: 'track_mode',
+        label: 'What do you want to track?',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'A person (actor/director)', value: 'person' },
+          { label: 'A movie or TV show', value: 'title' },
+        ],
+      },
+      {
         name: 'track_type',
         label: 'Track as',
         type: 'select',
@@ -90,8 +108,16 @@ export const CATEGORY_FORM_CONFIGS: Record<string, CategoryFormConfig> = {
           { label: 'Actor', value: 'actor' },
           { label: 'Director', value: 'director' },
         ],
+        visibleWhen: { field: 'track_mode', value: 'person' },
       },
     ],
+    entityOverrides: {
+      'track_mode:title': {
+        entityLabel: 'Movie or TV show',
+        entityPlaceholder: 'e.g. Oppenheimer',
+        searchSlug: 'movie-titles',
+      },
+    },
   },
   news: {
     entityLabel: 'Keyword',

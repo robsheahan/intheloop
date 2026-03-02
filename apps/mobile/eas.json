@@ -1,0 +1,32 @@
+{
+  "cli": {
+    "version": ">= 18.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://cujhihpgukdydhsbdqlp.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1amhpaHBndWtkeWRoc2JkcWxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMzQzODMsImV4cCI6MjA4NzcxMDM4M30.goh1ddd5dtN6lQeKqohS7a47Fp2Lhl8AVmsB-XyL-F4",
+        "EXPO_PUBLIC_API_URL": "https://intheloop-pink.vercel.app"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "robert.sheahan@gmail.com",
+        "ascAppId": "6759856630",
+        "appleTeamId": "DGGGZ6VZ9K"
+      }
+    }
+  }
+}

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { OAuthButtons } from '@/components/auth/oauth-buttons';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -43,6 +44,9 @@ function LoginForm() {
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
       </CardHeader>
+      <CardContent>
+        <OAuthButtons redirectTo={redirectTo} disabled={isLoading} />
+      </CardContent>
       <form onSubmit={handleLogin}>
         <CardContent className="space-y-4">
           {error && (

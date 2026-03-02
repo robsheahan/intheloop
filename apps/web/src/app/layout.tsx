@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'In The Loop',
-  description: 'Stay in the loop with personalized alerts for music, books, news, crypto, and more.',
+  title: 'Tell Me When',
+  description: 'Personalized alerts for music, books, news, crypto, and more.',
   icons: {
     icon: [
       { url: '/intheloopnew/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   manifest: '/intheloopnew/site.webmanifest',
   appleWebApp: {
-    title: 'In The Loop',
+    title: 'Tell Me When',
   },
 };
 

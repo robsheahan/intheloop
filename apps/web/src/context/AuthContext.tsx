@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
-import { Profile } from '@intheloop/shared/types/database';
+import { Profile } from '@tmw/shared/types/database';
 
 interface AuthContextType {
   user: User | null;

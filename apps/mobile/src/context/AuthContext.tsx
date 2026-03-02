@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, withTimeout } from '@/lib/supabase/client';
-import { Profile } from '@intheloop/shared/types/database';
+import { Profile } from '@tmw/shared/types/database';
 import { registerForPushNotifications, upsertPushToken } from '@/lib/push-notifications';
 
 interface AuthContextType {

@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
 import { AlertCard } from '@/components/shared/AlertCard';
-import { Category } from '@intheloop/shared/types/database';
+import { Category } from '@tmw/shared/types/database';
 
 export default function DashboardPage() {
   const { profile } = useAuth();

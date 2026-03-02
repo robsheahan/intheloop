@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
-import { SearchSuggestion } from '@intheloop/shared/search/types';
+import { SearchSuggestion } from '@tmw/shared/search/types';
 
 interface Props {
   value: string;
@@ -12,6 +12,7 @@ interface Props {
   disabled?: boolean;
   strict?: boolean;
   onSelectionChange?: (selected: boolean) => void;
+  onSuggestionSelect?: (suggestion: SearchSuggestion) => void;
   initialSelected?: boolean;
 }
 
@@ -23,6 +24,7 @@ export function AutocompleteInput({
   disabled,
   strict,
   onSelectionChange,
+  onSuggestionSelect,
   initialSelected = false,
 }: Props) {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
@@ -80,6 +82,7 @@ export function AutocompleteInput({
     setActiveIndex(-1);
     setWasSelected(true);
     onSelectionChange?.(true);
+    onSuggestionSelect?.(suggestion);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

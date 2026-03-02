@@ -1,9 +1,9 @@
 import { View, Text, Pressable, Linking } from 'react-native';
 import { Eye } from 'lucide-react-native';
-import { AlertHistory } from '@intheloop/shared/types/database';
-import { formatRelativeTime } from '@intheloop/shared/utils/formatting';
-import { renderAlertTitle, renderAlertDescription } from '@intheloop/shared/utils/alert-rendering';
-import { getCategoryColor } from '@intheloop/shared/utils/category-colors';
+import { AlertHistory } from '@tmw/shared/types/database';
+import { formatRelativeTime } from '@tmw/shared/utils/formatting';
+import { renderAlertTitle, renderAlertDescription } from '@tmw/shared/utils/alert-rendering';
+import { getCategoryColor } from '@tmw/shared/utils/category-colors';
 import { getCategoryIcon } from '@/lib/category-icons';
 import { Badge } from '@/components/ui/Badge';
 

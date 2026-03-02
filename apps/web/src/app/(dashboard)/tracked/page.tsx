@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Radar } from 'lucide-react';
 import { getCategoryIcon, getCategoryColor } from '@/lib/utils/categories';
-import { Category } from '@intheloop/shared/types/database';
+import { Category } from '@tmw/shared/types/database';
 
 export default function TrackedPage() {
   const { data: categories, isLoading: catLoading } = useOrderedCategories();

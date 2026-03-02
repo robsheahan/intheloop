@@ -2,19 +2,23 @@ import { useState, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, RefreshControl, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell, CheckCheck, ChevronRight, LayoutDashboard, RefreshCw } from 'lucide-react-native';
+import { Bell, CheckCheck, ChevronRight, LayoutDashboard, Plus, RefreshCw } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { selectionChanged, successNotification } from '@/lib/haptics';
 import { useOrderedCategories } from '@/hooks/useOrderedCategories';
 import { useAlerts, useUnseenCounts, useMarkSeen, useMarkAllSeenGlobal } from '@/hooks/useAlerts';
-import { useTrackedEntities } from '@/hooks/useTrackedEntities';
+import { useTrackedEntities, useAddTrackedEntity } from '@/hooks/useTrackedEntities';
 import { getCategoryIcon } from '@/lib/category-icons';
-import { getCategoryColor } from '@intheloop/shared/utils/category-colors';
+import { getCategoryColor } from '@tmw/shared/utils/category-colors';
+import { CATEGORY_FORM_CONFIGS } from '@tmw/shared/utils/category-fields';
 import { AlertCard } from '@/components/AlertCard';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { DashboardSkeleton } from '@/components/ui/Skeleton';
-import { Category } from '@intheloop/shared/types/database';
+import { Category } from '@tmw/shared/types/database';
 import { supabase } from '@/lib/supabase/client';
 
 export default function DashboardScreen() {
@@ -26,8 +30,12 @@ export default function DashboardScreen() {
   const { data: entities } = useTrackedEntities();
   const markSeen = useMarkSeen();
   const markAllSeen = useMarkAllSeenGlobal();
+  const addEntity = useAddTrackedEntity();
   const [refreshing, setRefreshing] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [addingTo, setAddingTo] = useState<string | null>(null);
+  const [entityName, setEntityName] = useState('');
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
   const handleSearchAlerts = useCallback(async () => {
     setIsRunning(true);
@@ -64,6 +72,29 @@ export default function DashboardScreen() {
     await Promise.all([refetchAlerts(), refetchUnseen()]);
     setRefreshing(false);
   }, [refetchAlerts, refetchUnseen]);
+
+  const handleAdd = (cat: Category) => {
+    if (!entityName.trim()) return;
+    const config = CATEGORY_FORM_CONFIGS[cat.slug];
+    const metadata: Record<string, unknown> = {};
+    if (config) {
+      for (const field of config.fields) {
+        if (fieldValues[field.name]) {
+          metadata[field.name] = fieldValues[field.name];
+        }
+      }
+    }
+    addEntity.mutate(
+      { categoryId: cat.id, entityName: entityName.trim(), entityMetadata: metadata },
+      {
+        onSuccess: () => {
+          setEntityName('');
+          setFieldValues({});
+          setAddingTo(null);
+        },
+      }
+    );
+  };
 
   const isLoading = catLoading || alertsLoading;
 
@@ -268,14 +299,97 @@ export default function DashboardScreen() {
                         No recent alerts.
                       </Text>
                     ) : null}
-                    <Pressable
-                      onPress={() => {
-                        selectionChanged();
-                        router.push(`/(dashboard)/category/${cat.slug}` as never);
-                      }}
-                    >
-                      <Text className="text-xs text-muted-foreground">View all</Text>
-                    </Pressable>
+
+                    {addingTo === cat.id ? (() => {
+                      const config = CATEGORY_FORM_CONFIGS[cat.slug];
+                      return (
+                        <View className="mt-2 gap-3">
+                          <Input
+                            label={config?.entityLabel || 'Name'}
+                            value={entityName}
+                            onChangeText={setEntityName}
+                            placeholder={config?.entityPlaceholder || 'Enter name'}
+                          />
+                          {config?.fields.map((field) => {
+                            if (field.type === 'select' && field.options) {
+                              return (
+                                <Select
+                                  key={field.name}
+                                  label={field.label}
+                                  value={fieldValues[field.name] || ''}
+                                  options={field.options}
+                                  onValueChange={(val) =>
+                                    setFieldValues((prev) => ({ ...prev, [field.name]: val }))
+                                  }
+                                />
+                              );
+                            }
+                            if (field.type === 'number' || field.type === 'text') {
+                              return (
+                                <Input
+                                  key={field.name}
+                                  label={field.label}
+                                  value={fieldValues[field.name] || ''}
+                                  onChangeText={(val) =>
+                                    setFieldValues((prev) => ({ ...prev, [field.name]: val }))
+                                  }
+                                  placeholder={field.placeholder}
+                                  keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                                />
+                              );
+                            }
+                            return null;
+                          })}
+                          <View className="flex-row gap-2">
+                            <Button
+                              onPress={() => handleAdd(cat)}
+                              loading={addEntity.isPending}
+                              className="flex-1"
+                            >
+                              Add
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onPress={() => {
+                                setAddingTo(null);
+                                setEntityName('');
+                                setFieldValues({});
+                              }}
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                          </View>
+                        </View>
+                      );
+                    })() : (
+                      <View className="flex-row items-center justify-between mt-1">
+                        <Pressable
+                          onPress={() => {
+                            selectionChanged();
+                            router.push(`/(dashboard)/category/${cat.slug}` as never);
+                          }}
+                        >
+                          <Text className="text-xs text-muted-foreground">View all</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => {
+                            setAddingTo(cat.id);
+                            setEntityName('');
+                            const config = CATEGORY_FORM_CONFIGS[cat.slug];
+                            const prefill: Record<string, string> = {};
+                            if (config?.fields.some((f) => f.name === 'city') && profile?.default_city) {
+                              prefill.city = profile.default_city;
+                            }
+                            setFieldValues(prefill);
+                          }}
+                          className="flex-row items-center gap-1"
+                        >
+                          <Plus size={14} color="#ff751f" />
+                          <Text className="text-xs text-primary font-medium">Add item</Text>
+                        </Pressable>
+                      </View>
+                    )}
                   </CardContent>
                 </Card>
               );

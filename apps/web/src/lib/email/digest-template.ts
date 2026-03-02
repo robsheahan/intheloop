@@ -62,7 +62,7 @@ export function buildDigestHtml(sections: CategorySection[]): string {
           <!-- Header -->
           <tr>
             <td style="background-color: #18181b; padding: 24px 24px 20px;">
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 600;">In The Loop — Daily Digest</h1>
+              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 600;">Tell Me When — Daily Digest</h1>
             </td>
           </tr>
           <!-- Body -->

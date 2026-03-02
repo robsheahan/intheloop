@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
-import { getPipeline } from '@intheloop/shared/pipelines';
-import { PipelineEntity } from '@intheloop/shared/types/pipelines';
+import { getPipeline } from '@tmw/shared/pipelines';
+import { PipelineEntity } from '@tmw/shared/types/pipelines';
 
 export async function POST(
   request: NextRequest,

@@ -3,7 +3,7 @@ import {
   Newspaper, Github, Gamepad2, Podcast, Cloud, MessageSquare, DollarSign,
 } from 'lucide-react';
 
-export { CATEGORY_COLORS, getCategoryColor } from '@intheloop/shared/utils/category-colors';
+export { CATEGORY_COLORS, getCategoryColor } from '@tmw/shared/utils/category-colors';
 
 export const CATEGORY_ICONS: Record<string, typeof Music> = {
   music: Music,
