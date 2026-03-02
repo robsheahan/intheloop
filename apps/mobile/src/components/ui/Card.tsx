@@ -10,7 +10,7 @@ export function Card({ children, className = '', style }: CardProps) {
   return (
     <View
       className={`bg-card rounded-xl border border-border p-4 ${className}`}
-      style={style}
+      style={[{ overflow: 'visible' }, style]}
     >
       {children}
     </View>

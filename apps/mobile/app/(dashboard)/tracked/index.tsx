@@ -6,15 +6,26 @@ import { useOrderedCategories } from '@/hooks/useOrderedCategories';
 import { mediumImpact, selectionChanged } from '@/lib/haptics';
 import { useTrackedEntities, useAddTrackedEntity, useRemoveTrackedEntity } from '@/hooks/useTrackedEntities';
 import { getCategoryIcon } from '@/lib/category-icons';
-import { getCategoryColor } from '@intheloop/shared/utils/category-colors';
-import { CATEGORY_FORM_CONFIGS } from '@intheloop/shared/utils/category-fields';
+import { getCategoryColor } from '@tmw/shared/utils/category-colors';
+import { CATEGORY_FORM_CONFIGS, CategoryField } from '@tmw/shared/utils/category-fields';
 import { useAuth } from '@/context/AuthContext';
-import { Category, TrackedEntity } from '@intheloop/shared/types/database';
+import { Category, TrackedEntity } from '@tmw/shared/types/database';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
 import { Select } from '@/components/ui/Select';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { TrackedSkeleton } from '@/components/ui/Skeleton';
+import { SearchSuggestion } from '@tmw/shared/search/types';
+
+const AUTOCOMPLETE_CATEGORIES = new Set([
+  'music', 'tours', 'books', 'crypto', 'stocks', 'movies',
+  'github', 'steam', 'weather', 'currency',
+]);
+
+const STRICT_AUTOCOMPLETE_CATEGORIES = new Set([
+  'crypto', 'stocks', 'currency', 'github',
+]);
 
 export default function TrackedScreen() {
   const { profile } = useAuth();
@@ -26,6 +37,7 @@ export default function TrackedScreen() {
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [entityName, setEntityName] = useState('');
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [entitySelected, setEntitySelected] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -34,18 +46,43 @@ export default function TrackedScreen() {
     setRefreshing(false);
   }, [refetchEntities]);
 
+  const isFieldVisible = (field: CategoryField, values: Record<string, string>): boolean => {
+    if (!field.visibleWhen) return true;
+    return values[field.visibleWhen.field] === field.visibleWhen.value;
+  };
+
+  const handleSuggestionSelect = (suggestion: SearchSuggestion) => {
+    if (suggestion.metadata) {
+      setFieldValues((prev) => ({
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(suggestion.metadata!).map(([k, v]) => [k, String(v)])
+        ),
+      }));
+    }
+  };
+
   const handleAdd = async (cat: Category) => {
     if (!entityName.trim()) return;
+
+    if (STRICT_AUTOCOMPLETE_CATEGORIES.has(cat.slug) && !entitySelected) {
+      Alert.alert('Selection required', 'Please select an item from the dropdown');
+      return;
+    }
 
     const config = CATEGORY_FORM_CONFIGS[cat.slug];
     const metadata: Record<string, unknown> = {};
     if (config) {
       for (const field of config.fields) {
+        if (!isFieldVisible(field, fieldValues)) continue;
         if (fieldValues[field.name]) {
           metadata[field.name] = fieldValues[field.name];
         }
       }
     }
+    // Carry over metadata from suggestion (tmdb_id, media_type, etc.)
+    if (fieldValues.tmdb_id) metadata.tmdb_id = parseInt(fieldValues.tmdb_id);
+    if (fieldValues.media_type) metadata.media_type = fieldValues.media_type;
 
     addEntity.mutate(
       { categoryId: cat.id, entityName: entityName.trim(), entityMetadata: metadata },
@@ -53,6 +90,7 @@ export default function TrackedScreen() {
         onSuccess: () => {
           setEntityName('');
           setFieldValues({});
+          setEntitySelected(false);
           setAddingTo(null);
         },
       }
@@ -154,13 +192,61 @@ export default function TrackedScreen() {
 
             {isAdding ? (
               <View className="mt-3 gap-3">
-                <Input
-                  label={config?.entityLabel || 'Name'}
-                  value={entityName}
-                  onChangeText={setEntityName}
-                  placeholder={config?.entityPlaceholder || 'Enter name'}
-                />
-                {config?.fields.map((field) => {
+                {/* Render track_mode selector first if present */}
+                {config?.fields
+                  .filter((f) => f.name === 'track_mode' && f.type === 'select' && f.options)
+                  .map((field) => (
+                    <Select
+                      key={field.name}
+                      label={field.label}
+                      value={fieldValues[field.name] || (field.options?.[0]?.value ?? '')}
+                      options={field.options!}
+                      onValueChange={(val) => {
+                        const prev = fieldValues[field.name];
+                        setFieldValues((p) => ({ ...p, [field.name]: val }));
+                        if (prev !== val) {
+                          setEntityName('');
+                          setEntitySelected(false);
+                        }
+                      }}
+                    />
+                  ))}
+                {(() => {
+                  const overrideKey = config?.entityOverrides
+                    ? Object.keys(config.entityOverrides).find((key) => {
+                        const [field, value] = key.split(':');
+                        return fieldValues[field] === value;
+                      })
+                    : undefined;
+                  const override = overrideKey ? config?.entityOverrides?.[overrideKey] : undefined;
+                  const entityLabel = override?.entityLabel || config?.entityLabel || 'Name';
+                  const entityPlaceholder = override?.entityPlaceholder || config?.entityPlaceholder || 'Enter name';
+                  const searchSlug = override?.searchSlug || cat.slug;
+                  const useAutocomplete = AUTOCOMPLETE_CATEGORIES.has(cat.slug) || !!override?.searchSlug;
+
+                  return useAutocomplete ? (
+                    <AutocompleteInput
+                      label={entityLabel}
+                      value={entityName}
+                      onChange={setEntityName}
+                      placeholder={entityPlaceholder}
+                      categorySlug={searchSlug}
+                      strict={STRICT_AUTOCOMPLETE_CATEGORIES.has(cat.slug)}
+                      onSelectionChange={setEntitySelected}
+                      onSuggestionSelect={handleSuggestionSelect}
+                    />
+                  ) : (
+                    <Input
+                      label={entityLabel}
+                      value={entityName}
+                      onChangeText={setEntityName}
+                      placeholder={entityPlaceholder}
+                    />
+                  );
+                })()}
+                {config?.fields
+                  .filter((f) => f.name !== 'track_mode' && isFieldVisible(f, fieldValues))
+                  .map((field) => {
                   if (field.type === 'select' && field.options) {
                     return (
                       <Select
@@ -204,6 +290,7 @@ export default function TrackedScreen() {
                       setAddingTo(null);
                       setEntityName('');
                       setFieldValues({});
+                      setEntitySelected(false);
                     }}
                     className="flex-1"
                   >
