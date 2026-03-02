@@ -176,13 +176,17 @@ export default function TrackedScreen() {
               >
                 <View className="flex-1">
                   <Text className="text-sm text-foreground">{entity.entity_name}</Text>
-                  {Object.keys(entity.entity_metadata || {}).length > 0 && (
-                    <Text className="text-xs text-muted-foreground">
-                      {Object.values(entity.entity_metadata)
-                        .filter(Boolean)
-                        .join(', ')}
-                    </Text>
-                  )}
+                  {(() => {
+                    const hidden = new Set(['tmdb_id', 'media_type', 'track_mode']);
+                    const display = Object.entries(entity.entity_metadata || {})
+                      .filter(([k, v]) => !hidden.has(k) && Boolean(v))
+                      .map(([, v]) => v);
+                    return display.length > 0 ? (
+                      <Text className="text-xs text-muted-foreground">
+                        {display.join(', ')}
+                      </Text>
+                    ) : null;
+                  })()}
                 </View>
                 <Pressable onPress={() => handleRemove(entity)} className="p-2">
                   <Trash2 size={16} color="#ef4444" />

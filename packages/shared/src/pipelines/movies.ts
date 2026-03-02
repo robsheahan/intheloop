@@ -115,9 +115,12 @@ async function fetchMovieReleases(entity: TitleEntity, tmdbId: number, apiKey: s
       6: 'TV',
     };
 
+    const today = new Date().toISOString().slice(0, 10);
     for (const rel of releases) {
       const releaseType = typeLabels[rel.type as number] || `Type ${rel.type}`;
       const releaseDate = ((rel.release_date || '') as string).slice(0, 10);
+      // Only include future release dates
+      if (releaseDate && releaseDate < today) continue;
       const dedupKey = `title|${entity.entity_name}|movie|${releaseType}`;
 
       results.push({
@@ -138,36 +141,6 @@ async function fetchMovieReleases(entity: TitleEntity, tmdbId: number, apiKey: s
     }
   }
 
-  // Fetch streaming/watch providers
-  const wpRes = await fetch(
-    `${TMDB_BASE}/movie/${tmdbId}/watch/providers?api_key=${apiKey}`,
-    { signal: AbortSignal.timeout(15000) }
-  );
-  if (wpRes.ok) {
-    const wpData = await wpRes.json();
-    const region = wpData.results?.AU || wpData.results?.US;
-    if (region?.flatrate) {
-      for (const provider of region.flatrate) {
-        const providerName = provider.provider_name as string;
-        const dedupKey = `title|${entity.entity_name}|movie|Streaming|${providerName}`;
-
-        results.push({
-          entity_name: entity.entity_name,
-          tracked_entity_id: entity.id,
-          dedup_key: dedupKey,
-          content: {
-            type: 'movies',
-            track_mode: 'title',
-            title: entity.entity_name,
-            media_type: 'movie',
-            release_type: `Streaming on ${providerName}`,
-            url: link,
-          },
-        });
-      }
-    }
-  }
-
   return results;
 }
 
@@ -182,9 +155,10 @@ async function fetchTvReleases(entity: TitleEntity, tmdbId: number, apiKey: stri
   if (!res.ok) return [];
 
   const data = await res.json();
+  const today = new Date().toISOString().slice(0, 10);
 
-  // Premiere / first air date
-  if (data.first_air_date) {
+  // Premiere / first air date — only if upcoming
+  if (data.first_air_date && data.first_air_date >= today) {
     results.push({
       entity_name: entity.entity_name,
       tracked_entity_id: entity.id,
@@ -223,10 +197,10 @@ async function fetchTvReleases(entity: TitleEntity, tmdbId: number, apiKey: stri
     });
   }
 
-  // Latest season
+  // Latest season — only if upcoming
   if (data.seasons && data.seasons.length > 0) {
     const latest = data.seasons[data.seasons.length - 1];
-    if (latest.air_date) {
+    if (latest.air_date && latest.air_date >= today) {
       results.push({
         entity_name: entity.entity_name,
         tracked_entity_id: entity.id,
@@ -282,10 +256,18 @@ async function fetchCredits(personName: string, trackType: string, apiKey: strin
     ? (creditsData.crew || []).filter((i: Record<string, unknown>) => i.job === 'Director')
     : creditsData.cast || [];
 
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Only include upcoming projects (future date or no date = announced but unreleased)
+  items = items.filter((item: Record<string, unknown>) => {
+    const date = (item.release_date || item.first_air_date || '') as string;
+    return !date || date >= today;
+  });
+
   items.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
     const dateA = (a.release_date || a.first_air_date || '') as string;
     const dateB = (b.release_date || b.first_air_date || '') as string;
-    return dateB.localeCompare(dateA);
+    return dateA.localeCompare(dateB);
   });
 
   return items.slice(0, 10).map((item: Record<string, unknown>) => {
