@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,6 @@ interface Props {
   placeholder?: string;
   categorySlug: string;
   label?: string;
-  strict?: boolean;
   onSelectionChange?: (selected: boolean) => void;
   onSuggestionSelect?: (suggestion: SearchSuggestion) => void;
   initialSelected?: boolean;
@@ -31,7 +30,6 @@ export function AutocompleteInput({
   placeholder,
   categorySlug,
   label,
-  strict,
   onSelectionChange,
   onSuggestionSelect,
   initialSelected = false,
@@ -42,6 +40,20 @@ export function AutocompleteInput({
   const [wasSelected, setWasSelected] = useState(initialSelected);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const inputRef = useRef<TextInput>(null);
+  const isFocusedRef = useRef(false);
+
+  // Close dropdown when keyboard is dismissed externally (e.g. drag)
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidHide', () => {
+      // Small delay to allow Pressable onPress to fire first
+      setTimeout(() => {
+        if (!isFocusedRef.current) {
+          setIsOpen(false);
+        }
+      }, 150);
+    });
+    return () => sub.remove();
+  }, []);
 
   const fetchSuggestions = useCallback(
     async (query: string) => {
@@ -65,7 +77,9 @@ export function AutocompleteInput({
           const data = await res.json();
           const results: SearchSuggestion[] = data.suggestions || [];
           setSuggestions(results);
-          setIsOpen(results.length > 0);
+          if (results.length > 0) {
+            setIsOpen(true);
+          }
         }
       } catch {
         // Silently fail — user can still type manually
@@ -97,12 +111,20 @@ export function AutocompleteInput({
     Keyboard.dismiss();
   };
 
-  const handleBlur = () => {
-    // Small delay so Pressable onPress fires before we close
-    setTimeout(() => setIsOpen(false), 200);
+  const handleFocus = () => {
+    isFocusedRef.current = true;
+    if (suggestions.length > 0) setIsOpen(true);
   };
 
-  const showWarning = strict && value.length > 0 && !wasSelected;
+  const handleBlur = () => {
+    isFocusedRef.current = false;
+    // Delay closing so Pressable onPress on suggestions can fire first
+    setTimeout(() => {
+      if (!isFocusedRef.current) {
+        setIsOpen(false);
+      }
+    }, 200);
+  };
 
   return (
     <View className="relative" style={{ zIndex: 50 }}>
@@ -112,14 +134,11 @@ export function AutocompleteInput({
           label={label}
           value={value}
           onChangeText={handleChangeText}
-          onFocus={() => {
-            if (suggestions.length > 0) setIsOpen(true);
-          }}
+          onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
           autoComplete="off"
           autoCorrect={false}
-          className={showWarning ? 'border-amber-500' : ''}
         />
         {isLoading && (
           <View className="absolute right-3 top-0 bottom-0 justify-center" style={label ? { top: 24 } : undefined}>
@@ -127,10 +146,6 @@ export function AutocompleteInput({
           </View>
         )}
       </View>
-      {showWarning && (
-        <Text className="text-xs text-amber-600 mt-1">Please select from the dropdown</Text>
-      )}
-
       {isOpen && suggestions.length > 0 && (
         <View
           className="absolute left-0 right-0 bg-white border border-border rounded-lg shadow-lg"

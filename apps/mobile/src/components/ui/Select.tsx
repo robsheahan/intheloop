@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, Modal, FlatList } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronDown } from 'lucide-react-native';
 
 interface SelectOption {
@@ -27,6 +28,7 @@ export function Select({
   disabled,
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const insets = useSafeAreaInsets();
   const selectedOption = options.find((o) => o.value === value);
 
   return (
@@ -75,6 +77,7 @@ export function Select({
             <FlatList
               data={options}
               keyExtractor={(item) => item.value}
+              contentContainerStyle={{ paddingBottom: insets.bottom }}
               renderItem={({ item }) => (
                 <Pressable
                   onPress={() => {

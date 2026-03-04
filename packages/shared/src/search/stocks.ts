@@ -1,25 +1,23 @@
 import { SearchSuggestion } from './types';
 
 export async function searchStocks(query: string): Promise<SearchSuggestion[]> {
-  const apiKey = process.env.ALPHA_VANTAGE_KEY;
-  if (!apiKey) return [];
-
-  const params = new URLSearchParams({
-    function: 'SYMBOL_SEARCH',
-    keywords: query,
-    apikey: apiKey,
-  });
-
-  const res = await fetch(`https://www.alphavantage.co/query?${params}`, {
-    signal: AbortSignal.timeout(8000),
-  });
+  const res = await fetch(
+    `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`,
+    {
+      signal: AbortSignal.timeout(8000),
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    }
+  );
   if (!res.ok) return [];
 
   const data = await res.json();
 
-  return (data.bestMatches || []).slice(0, 8).map((m: Record<string, string>) => ({
-    value: m['1. symbol'],
-    label: m['1. symbol'],
-    subtitle: m['2. name'],
-  }));
+  return (data.quotes || [])
+    .filter((q: Record<string, string>) => q.quoteType === 'EQUITY' || q.quoteType === 'ETF')
+    .slice(0, 8)
+    .map((q: Record<string, string>) => ({
+      value: q.symbol,
+      label: q.symbol,
+      subtitle: q.longname || q.shortname || '',
+    }));
 }

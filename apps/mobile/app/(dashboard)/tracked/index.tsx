@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, RefreshControl } from 'react-native';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, Pressable, Alert, RefreshControl, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Trash2, Plus, ChevronDown, ChevronUp, Radar } from 'lucide-react-native';
 import { useOrderedCategories } from '@/hooks/useOrderedCategories';
@@ -20,11 +20,7 @@ import { SearchSuggestion } from '@tmw/shared/search/types';
 
 const AUTOCOMPLETE_CATEGORIES = new Set([
   'music', 'tours', 'books', 'crypto', 'stocks', 'movies',
-  'github', 'steam', 'weather', 'currency',
-]);
-
-const STRICT_AUTOCOMPLETE_CATEGORIES = new Set([
-  'crypto', 'stocks', 'currency', 'github',
+  'github', 'steam', 'weather', 'currency', 'podcasts',
 ]);
 
 export default function TrackedScreen() {
@@ -39,6 +35,36 @@ export default function TrackedScreen() {
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [entitySelected, setEntitySelected] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollOffsetRef = useRef(0);
+  const addFormRef = useRef<View>(null);
+  const keyboardHeightRef = useRef(300);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        keyboardHeightRef.current = e.endCoordinates.height;
+        // Scroll form into view when keyboard appears
+        if (addFormRef.current) {
+          setTimeout(() => {
+            addFormRef.current?.measureInWindow((_x, y, _w, h) => {
+              const screenHeight = e.endCoordinates.screenY;
+              const formBottom = y + h;
+              if (formBottom > screenHeight) {
+                const scrollBy = formBottom - screenHeight + 40;
+                scrollViewRef.current?.scrollTo({
+                  y: scrollOffsetRef.current + scrollBy,
+                  animated: true,
+                });
+              }
+            });
+          }, 50);
+        }
+      }
+    );
+    return () => showSub.remove();
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -64,11 +90,6 @@ export default function TrackedScreen() {
 
   const handleAdd = async (cat: Category) => {
     if (!entityName.trim()) return;
-
-    if (STRICT_AUTOCOMPLETE_CATEGORIES.has(cat.slug) && !entitySelected) {
-      Alert.alert('Selection required', 'Please select an item from the dropdown');
-      return;
-    }
 
     const config = CATEGORY_FORM_CONFIGS[cat.slug];
     const metadata: Record<string, unknown> = {};
@@ -111,6 +132,29 @@ export default function TrackedScreen() {
     ]);
   };
 
+  const handleStartAdding = (cat: Category) => {
+    setAddingTo(cat.id);
+    setEntityName('');
+    const config = CATEGORY_FORM_CONFIGS[cat.slug];
+    const prefill: Record<string, string> = {};
+    if (config?.fields.some((f) => f.name === 'city') && profile?.default_city) {
+      prefill.city = profile.default_city;
+    }
+    // Prefill select fields with their first option so overrides trigger correctly
+    if (config) {
+      for (const field of config.fields) {
+        if (field.type === 'select' && field.options?.length) {
+          prefill[field.name] = field.options[0].value;
+        }
+      }
+    }
+    setFieldValues(prefill);
+  };
+
+  const addFormRefCallback = useCallback((node: View | null) => {
+    addFormRef.current = node;
+  }, []);
+
   const isLoading = catLoading || entitiesLoading;
 
   const entitiesByCat = useMemo(() => {
@@ -118,6 +162,10 @@ export default function TrackedScreen() {
     for (const e of allEntities || []) {
       if (!map[e.category_id]) map[e.category_id] = [];
       map[e.category_id].push(e);
+    }
+    // Sort entities alphabetically within each category
+    for (const key of Object.keys(map)) {
+      map[key].sort((a, b) => a.entity_name.localeCompare(b.entity_name));
     }
     return map;
   }, [allEntities]);
@@ -176,17 +224,6 @@ export default function TrackedScreen() {
               >
                 <View className="flex-1">
                   <Text className="text-sm text-foreground">{entity.entity_name}</Text>
-                  {(() => {
-                    const hidden = new Set(['tmdb_id', 'media_type', 'track_mode']);
-                    const display = Object.entries(entity.entity_metadata || {})
-                      .filter(([k, v]) => !hidden.has(k) && Boolean(v))
-                      .map(([, v]) => v);
-                    return display.length > 0 ? (
-                      <Text className="text-xs text-muted-foreground">
-                        {display.join(', ')}
-                      </Text>
-                    ) : null;
-                  })()}
                 </View>
                 <Pressable onPress={() => handleRemove(entity)} className="p-2">
                   <Trash2 size={16} color="#ef4444" />
@@ -195,7 +232,7 @@ export default function TrackedScreen() {
             ))}
 
             {isAdding ? (
-              <View className="mt-3 gap-3">
+              <View ref={addFormRefCallback} className="mt-3 gap-3">
                 {/* Render track_mode selector first if present */}
                 {config?.fields
                   .filter((f) => f.name === 'track_mode' && f.type === 'select' && f.options)
@@ -235,7 +272,6 @@ export default function TrackedScreen() {
                       onChange={setEntityName}
                       placeholder={entityPlaceholder}
                       categorySlug={searchSlug}
-                      strict={STRICT_AUTOCOMPLETE_CATEGORIES.has(cat.slug)}
                       onSelectionChange={setEntitySelected}
                       onSuggestionSelect={handleSuggestionSelect}
                     />
@@ -304,15 +340,7 @@ export default function TrackedScreen() {
               </View>
             ) : (
               <Pressable
-                onPress={() => {
-                  setAddingTo(cat.id);
-                  setEntityName('');
-                  const prefill: Record<string, string> = {};
-                  if (config?.fields.some((f) => f.name === 'city') && profile?.default_city) {
-                    prefill.city = profile.default_city;
-                  }
-                  setFieldValues(prefill);
-                }}
+                onPress={() => handleStartAdding(cat)}
                 className="flex-row items-center gap-1 mt-3"
               >
                 <Plus size={16} color="#ff751f" />
@@ -327,13 +355,12 @@ export default function TrackedScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <ScrollView
-        className="flex-1 px-4"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff751f" />
-        }
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View className="rounded-xl bg-[#2d4a7a] p-5 mt-4 mb-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
+      <View className="px-4 mt-4 mb-3">
+        <View className="rounded-xl bg-[#2d4a7a] p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
           <View className="flex-row items-center gap-3">
             <View className="h-10 w-10 rounded-lg bg-white/10 items-center justify-center">
               <Radar size={22} color="#ff751f" />
@@ -348,7 +375,19 @@ export default function TrackedScreen() {
             </View>
           </View>
         </View>
+      </View>
 
+      <ScrollView
+        ref={scrollViewRef}
+        className="flex-1 px-4"
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        scrollEventThrottle={16}
+        onScroll={(e) => { scrollOffsetRef.current = e.nativeEvent.contentOffset.y; }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff751f" />
+        }
+      >
         {isLoading ? (
           <TrackedSkeleton />
         ) : (
@@ -369,6 +408,7 @@ export default function TrackedScreen() {
           </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -39,13 +39,6 @@ export function EntityList({ entities }: Props) {
         >
           <div className="min-w-0">
             <span className="text-sm font-medium">{entity.entity_name}</span>
-            {Object.keys(entity.entity_metadata).length > 0 && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                {Object.values(entity.entity_metadata)
-                  .filter(Boolean)
-                  .join(', ')}
-              </span>
-            )}
           </div>
           <Button
             variant="ghost"

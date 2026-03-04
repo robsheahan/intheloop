@@ -45,15 +45,29 @@ export async function checkCrypto(ctx: PipelineContext): Promise<PipelineResult[
   return results;
 }
 
-async function fetchPrice(instrumentName: string): Promise<number | null> {
-  const res = await fetch(`${TICKER_URL}?instrument_name=${encodeURIComponent(instrumentName)}`, {
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) return null;
+async function fetchPrice(entityName: string): Promise<number | null> {
+  // entity_name may be a base currency like "BTC" or a full instrument like "BTC_USDT"
+  // Try multiple instrument formats to find a match
+  const candidates = entityName.includes('_')
+    ? [entityName]
+    : [`${entityName}_USDT`, `${entityName}_USD`];
 
-  const data = await res.json();
-  const tickers = data?.result?.data;
-  if (!tickers || tickers.length === 0) return null;
+  for (const instrument of candidates) {
+    try {
+      const res = await fetch(`${TICKER_URL}?instrument_name=${encodeURIComponent(instrument)}`, {
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) continue;
 
-  return parseFloat(tickers[0].a);
+      const data = await res.json();
+      const tickers = data?.result?.data;
+      if (!tickers || tickers.length === 0) continue;
+
+      return parseFloat(tickers[0].a);
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
 }

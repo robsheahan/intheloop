@@ -10,7 +10,6 @@ interface Props {
   placeholder?: string;
   categorySlug: string;
   disabled?: boolean;
-  strict?: boolean;
   onSelectionChange?: (selected: boolean) => void;
   onSuggestionSelect?: (suggestion: SearchSuggestion) => void;
   initialSelected?: boolean;
@@ -22,7 +21,6 @@ export function AutocompleteInput({
   placeholder,
   categorySlug,
   disabled,
-  strict,
   onSelectionChange,
   onSuggestionSelect,
   initialSelected = false,
@@ -133,12 +131,7 @@ export function AutocompleteInput({
         placeholder={placeholder}
         disabled={disabled}
         autoComplete="off"
-        className={strict && value && !wasSelected ? 'border-amber-500 focus-visible:ring-amber-500' : ''}
       />
-      {strict && value && !wasSelected && (
-        <p className="text-xs text-amber-600 mt-1">Please select from the dropdown</p>
-      )}
-
       {isLoading && (
         <div className="absolute right-2 top-1/2 -translate-y-1/2">
           <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />

@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl, Alert, ActivityIndicator } from 'react-native';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, Pressable, RefreshControl, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, CheckCheck, ChevronRight, LayoutDashboard, Plus, RefreshCw } from 'lucide-react-native';
@@ -15,11 +15,19 @@ import { AlertCard } from '@/components/AlertCard';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
 import { Select } from '@/components/ui/Select';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { Category } from '@tmw/shared/types/database';
+import { CategoryField } from '@tmw/shared/utils/category-fields';
+import { SearchSuggestion } from '@tmw/shared/search/types';
 import { supabase } from '@/lib/supabase/client';
+
+const AUTOCOMPLETE_CATEGORIES = new Set([
+  'music', 'tours', 'books', 'crypto', 'stocks', 'movies',
+  'github', 'steam', 'weather', 'currency', 'podcasts',
+]);
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -36,6 +44,54 @@ export default function DashboardScreen() {
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [entityName, setEntityName] = useState('');
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [entitySelected, setEntitySelected] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollOffsetRef = useRef(0);
+  const addFormRef = useRef<View>(null);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        if (addFormRef.current) {
+          setTimeout(() => {
+            addFormRef.current?.measureInWindow((_x, y, _w, h) => {
+              const screenHeight = e.endCoordinates.screenY;
+              const formBottom = y + h;
+              if (formBottom > screenHeight) {
+                const scrollBy = formBottom - screenHeight + 40;
+                scrollViewRef.current?.scrollTo({
+                  y: scrollOffsetRef.current + scrollBy,
+                  animated: true,
+                });
+              }
+            });
+          }, 50);
+        }
+      }
+    );
+    return () => showSub.remove();
+  }, []);
+
+  const isFieldVisible = (field: CategoryField, values: Record<string, string>): boolean => {
+    if (!field.visibleWhen) return true;
+    return values[field.visibleWhen.field] === field.visibleWhen.value;
+  };
+
+  const handleSuggestionSelect = (suggestion: SearchSuggestion) => {
+    if (suggestion.metadata) {
+      setFieldValues((prev) => ({
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(suggestion.metadata!).map(([k, v]) => [k, String(v)])
+        ),
+      }));
+    }
+  };
+
+  const addFormRefCallback = useCallback((node: View | null) => {
+    addFormRef.current = node;
+  }, []);
 
   const handleSearchAlerts = useCallback(async () => {
     setIsRunning(true);
@@ -79,17 +135,21 @@ export default function DashboardScreen() {
     const metadata: Record<string, unknown> = {};
     if (config) {
       for (const field of config.fields) {
+        if (!isFieldVisible(field, fieldValues)) continue;
         if (fieldValues[field.name]) {
           metadata[field.name] = fieldValues[field.name];
         }
       }
     }
+    if (fieldValues.tmdb_id) metadata.tmdb_id = parseInt(fieldValues.tmdb_id);
+    if (fieldValues.media_type) metadata.media_type = fieldValues.media_type;
     addEntity.mutate(
       { categoryId: cat.id, entityName: entityName.trim(), entityMetadata: metadata },
       {
         onSuccess: () => {
           setEntityName('');
           setFieldValues({});
+          setEntitySelected(false);
           setAddingTo(null);
         },
       }
@@ -146,20 +206,18 @@ export default function DashboardScreen() {
     return acc;
   }, {});
 
-  const activeCategories = (categories || []).filter(
-    (c: Category) => (entitiesCountByCategory[c.id] || 0) > 0
-  );
+  const activeCategories = (categories || [])
+    .filter((c: Category) => (entitiesCountByCategory[c.id] || 0) > 0)
+    .sort((a, b) => (entitiesCountByCategory[b.id] || 0) - (entitiesCountByCategory[a.id] || 0));
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <ScrollView
-        className="flex-1 px-4"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff751f" />
-        }
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View className="rounded-xl bg-[#2d4a7a] p-5 mt-4 mb-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
+      <View className="px-4 mt-4 mb-4">
+        <View className="rounded-xl bg-[#2d4a7a] p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-3">
               <View className="h-10 w-10 rounded-lg bg-white/10 items-center justify-center">
@@ -194,7 +252,7 @@ export default function DashboardScreen() {
         <Pressable
           onPress={handleSearchAlerts}
           disabled={isRunning}
-          className="flex-row items-center justify-center gap-2 mb-4 py-3 rounded-xl"
+          className="flex-row items-center justify-center gap-2 mt-3 py-3 rounded-xl"
           style={{
             backgroundColor: isRunning ? '#cc5e19' : '#ff751f',
             shadowColor: '#ff751f',
@@ -214,7 +272,19 @@ export default function DashboardScreen() {
             {isRunning ? 'Searching...' : 'Search new alerts'}
           </Text>
         </Pressable>
+      </View>
 
+      <ScrollView
+        ref={scrollViewRef}
+        className="flex-1 px-4"
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        scrollEventThrottle={16}
+        onScroll={(e) => { scrollOffsetRef.current = e.nativeEvent.contentOffset.y; }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff751f" />
+        }
+      >
         {isLoading ? (
           <DashboardSkeleton />
         ) : activeCategories.length === 0 ? (
@@ -302,15 +372,60 @@ export default function DashboardScreen() {
 
                     {addingTo === cat.id ? (() => {
                       const config = CATEGORY_FORM_CONFIGS[cat.slug];
+                      const overrideKey = config?.entityOverrides
+                        ? Object.keys(config.entityOverrides).find((key) => {
+                            const [field, value] = key.split(':');
+                            return fieldValues[field] === value;
+                          })
+                        : undefined;
+                      const override = overrideKey ? config?.entityOverrides?.[overrideKey] : undefined;
+                      const entityLabel = override?.entityLabel || config?.entityLabel || 'Name';
+                      const entityPlaceholder = override?.entityPlaceholder || config?.entityPlaceholder || 'Enter name';
+                      const searchSlug = override?.searchSlug || cat.slug;
+                      const useAutocomplete = AUTOCOMPLETE_CATEGORIES.has(cat.slug) || !!override?.searchSlug;
+
                       return (
-                        <View className="mt-2 gap-3">
-                          <Input
-                            label={config?.entityLabel || 'Name'}
-                            value={entityName}
-                            onChangeText={setEntityName}
-                            placeholder={config?.entityPlaceholder || 'Enter name'}
-                          />
-                          {config?.fields.map((field) => {
+                        <View ref={addFormRefCallback} className="mt-2 gap-3">
+                          {/* track_mode selector first if present */}
+                          {config?.fields
+                            .filter((f) => f.name === 'track_mode' && f.type === 'select' && f.options)
+                            .map((field) => (
+                              <Select
+                                key={field.name}
+                                label={field.label}
+                                value={fieldValues[field.name] || (field.options?.[0]?.value ?? '')}
+                                options={field.options!}
+                                onValueChange={(val) => {
+                                  const prev = fieldValues[field.name];
+                                  setFieldValues((p) => ({ ...p, [field.name]: val }));
+                                  if (prev !== val) {
+                                    setEntityName('');
+                                    setEntitySelected(false);
+                                  }
+                                }}
+                              />
+                            ))}
+                          {useAutocomplete ? (
+                            <AutocompleteInput
+                              label={entityLabel}
+                              value={entityName}
+                              onChange={setEntityName}
+                              placeholder={entityPlaceholder}
+                              categorySlug={searchSlug}
+                              onSelectionChange={setEntitySelected}
+                              onSuggestionSelect={handleSuggestionSelect}
+                            />
+                          ) : (
+                            <Input
+                              label={entityLabel}
+                              value={entityName}
+                              onChangeText={setEntityName}
+                              placeholder={entityPlaceholder}
+                            />
+                          )}
+                          {config?.fields
+                            .filter((f) => f.name !== 'track_mode' && isFieldVisible(f, fieldValues))
+                            .map((field) => {
                             if (field.type === 'select' && field.options) {
                               return (
                                 <Select
@@ -354,6 +469,7 @@ export default function DashboardScreen() {
                                 setAddingTo(null);
                                 setEntityName('');
                                 setFieldValues({});
+                                setEntitySelected(false);
                               }}
                               className="flex-1"
                             >
@@ -376,10 +492,18 @@ export default function DashboardScreen() {
                           onPress={() => {
                             setAddingTo(cat.id);
                             setEntityName('');
+                            setEntitySelected(false);
                             const config = CATEGORY_FORM_CONFIGS[cat.slug];
                             const prefill: Record<string, string> = {};
                             if (config?.fields.some((f) => f.name === 'city') && profile?.default_city) {
                               prefill.city = profile.default_city;
+                            }
+                            if (config) {
+                              for (const field of config.fields) {
+                                if (field.type === 'select' && field.options?.length) {
+                                  prefill[field.name] = field.options[0].value;
+                                }
+                              }
                             }
                             setFieldValues(prefill);
                           }}
@@ -397,6 +521,7 @@ export default function DashboardScreen() {
           </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

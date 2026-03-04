@@ -22,6 +22,9 @@ export function renderAlertTitle(content: Record<string, unknown>, type: string)
     case 'steam':
       return `${content.name}: ${content.discount_percent}% off`;
     case 'podcasts':
+      if (content.track_mode === 'show') {
+        return `${content.episode_title}`;
+      }
       return `${content.episode_title} — ${content.podcast_name}`;
     case 'weather':
       return `${content.city}: ${content.alert_type} alert`;
@@ -64,6 +67,9 @@ export function renderAlertDescription(content: Record<string, unknown>, type: s
     case 'steam':
       return `Original: $${content.original_price} | Sale: $${content.sale_price}`;
     case 'podcasts':
+      if (content.track_mode === 'show') {
+        return content.published ? `New episode · ${new Date(content.published as string).toLocaleDateString()}` : 'New episode';
+      }
       return content.published ? new Date(content.published as string).toLocaleDateString() : '';
     case 'weather':
       return `Value: ${content.value}, Threshold: ${content.threshold}`;

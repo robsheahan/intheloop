@@ -1,14 +1,6 @@
 import { PipelineContext, PipelineResult } from './types';
 
-const AV_URL = 'https://www.alphavantage.co/query';
-
 export async function checkStocks(ctx: PipelineContext): Promise<PipelineResult[]> {
-  const apiKey = process.env.ALPHA_VANTAGE_KEY;
-  if (!apiKey) {
-    console.warn('ALPHA_VANTAGE_KEY not configured — skipping stocks pipeline');
-    return [];
-  }
-
   const results: PipelineResult[] = [];
 
   for (const entity of ctx.entities) {
@@ -18,7 +10,7 @@ export async function checkStocks(ctx: PipelineContext): Promise<PipelineResult[
     if (isNaN(targetPrice)) continue;
 
     try {
-      const currentPrice = await fetchPrice(entity.entity_name, apiKey);
+      const currentPrice = await fetchPrice(entity.entity_name);
       if (currentPrice === null) continue;
 
       const triggered =
@@ -51,19 +43,19 @@ export async function checkStocks(ctx: PipelineContext): Promise<PipelineResult[
   return results;
 }
 
-async function fetchPrice(symbol: string, apiKey: string): Promise<number | null> {
-  const params = new URLSearchParams({
-    function: 'GLOBAL_QUOTE',
-    symbol,
-    apikey: apiKey,
-  });
-
-  const res = await fetch(`${AV_URL}?${params}`, { signal: AbortSignal.timeout(15000) });
+async function fetchPrice(symbol: string): Promise<number | null> {
+  const res = await fetch(
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`,
+    {
+      signal: AbortSignal.timeout(15000),
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    }
+  );
   if (!res.ok) return null;
 
   const data = await res.json();
-  const priceStr = data?.['Global Quote']?.['05. price'];
-  if (!priceStr) return null;
+  const meta = data?.chart?.result?.[0]?.meta;
+  if (!meta?.regularMarketPrice) return null;
 
-  return parseFloat(priceStr);
+  return meta.regularMarketPrice;
 }

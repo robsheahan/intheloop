@@ -3,7 +3,6 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { getAllPipelineSlugs, getPipeline } from '@tmw/shared/pipelines';
 import { PipelineEntity } from '@tmw/shared/types/pipelines';
-import { sendDigestEmails } from '@/lib/email/send-digest';
 import { sendPushNotifications } from '@/lib/push/send-notifications';
 
 export async function POST(request: NextRequest) {
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create pipeline run' }, { status: 500 });
   }
 
-  const runStartedAt = new Date().toISOString();
   const summary: Record<string, { total: number; new: number; errors: string[] }> = {};
   // Track new alerts per user for push notifications
   const pushAlertsByUser = new Map<string, { categoryNames: Set<string>; totalNew: number }>();
@@ -143,19 +141,9 @@ export async function POST(request: NextRequest) {
       .update({ status: 'completed', completed_at: new Date().toISOString(), summary })
       .eq('id', run.id);
 
-    // Send digest emails and push notifications if there were any new alerts
+    // Send push notifications if there were any new alerts
     const totalNew = Object.values(summary).reduce((sum, s) => sum + s.new, 0);
-    let emailResult = { sent: 0, skipped: 0, errors: [] as string[] };
     if (totalNew > 0) {
-      try {
-        emailResult = await sendDigestEmails(runStartedAt);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error('Digest email error:', msg);
-        emailResult.errors.push(msg);
-      }
-
-      // Send push notifications
       try {
         const pushData = new Map<string, { categoryNames: string[]; totalNew: number }>();
         for (const [userId, data] of pushAlertsByUser) {
@@ -170,7 +158,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, run_id: run.id, summary, emails: emailResult });
+    return NextResponse.json({ success: true, run_id: run.id, summary });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     await admin

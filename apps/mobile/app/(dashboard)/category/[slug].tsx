@@ -211,30 +211,49 @@ export default function CategoryDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {isLoading ? (
-        <>
-          <View className="px-4 mt-4 mb-3">
-            <View className="rounded-xl bg-[#2d4a7a] p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
-              <View className="flex-row items-center gap-3">
-                <Pressable onPress={() => router.back()} className="p-1">
-                  <ArrowLeft size={22} color="#fff" />
-                </Pressable>
-                <View className="h-10 w-10 rounded-lg bg-white/10 items-center justify-center">
-                  <Icon size={22} color={color} />
-                </View>
-                <View>
-                  <Text className="text-xl font-bold text-white">{category?.name || slug}</Text>
-                  <Text className="text-sm text-white/70">Loading alerts...</Text>
-                </View>
+      <View className="px-4 mt-4 mb-3">
+        <View className="rounded-xl bg-[#2d4a7a] p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-3">
+              <Pressable onPress={() => router.back()} className="p-1">
+                <ArrowLeft size={22} color="#fff" />
+              </Pressable>
+              <View className="h-10 w-10 rounded-lg bg-white/10 items-center justify-center">
+                <Icon size={22} color={color} />
+              </View>
+              <View>
+                <Text className="text-xl font-bold text-white">
+                  {category?.name || slug}
+                </Text>
+                <Text className="text-sm text-white/70">
+                  {isLoading
+                    ? 'Loading alerts...'
+                    : `${(alerts || []).length} alert${(alerts || []).length !== 1 ? 's' : ''}${unseenCount > 0 ? ` · ${unseenCount} new` : ''}`}
+                </Text>
               </View>
             </View>
+            {unseenCount > 0 && (
+              <Pressable
+                onPress={() => {
+                  successNotification();
+                  slug && markAllSeen.mutate(slug);
+                }}
+                className="flex-row items-center gap-1 px-3 py-1.5"
+              >
+                <CheckCheck size={16} color="#ff751f" />
+                <Text className="text-[#ff751f] text-sm font-medium">Read all</Text>
+              </Pressable>
+            )}
           </View>
-          <View className="px-4 gap-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <AlertCardSkeleton key={i} />
-            ))}
-          </View>
-        </>
+        </View>
+      </View>
+
+      {isLoading ? (
+        <View className="px-4 gap-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <AlertCardSkeleton key={i} />
+          ))}
+        </View>
       ) : (
         <SectionList
           sections={sections}
@@ -244,43 +263,6 @@ export default function CategoryDetailScreen() {
           stickySectionHeadersEnabled={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff751f" />
-          }
-          ListHeaderComponent={
-            <View className="px-4 mt-4 mb-1">
-              <View className="rounded-xl bg-[#2d4a7a] p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-3">
-                    <Pressable onPress={() => router.back()} className="p-1">
-                      <ArrowLeft size={22} color="#fff" />
-                    </Pressable>
-                    <View className="h-10 w-10 rounded-lg bg-white/10 items-center justify-center">
-                      <Icon size={22} color={color} />
-                    </View>
-                    <View>
-                      <Text className="text-xl font-bold text-white">
-                        {category?.name || slug}
-                      </Text>
-                      <Text className="text-sm text-white/70">
-                        {(alerts || []).length} alert{(alerts || []).length !== 1 ? 's' : ''}
-                        {unseenCount > 0 ? ` · ${unseenCount} new` : ''}
-                      </Text>
-                    </View>
-                  </View>
-                  {unseenCount > 0 && (
-                    <Pressable
-                      onPress={() => {
-                        successNotification();
-                        slug && markAllSeen.mutate(slug);
-                      }}
-                      className="flex-row items-center gap-1 px-3 py-1.5"
-                    >
-                      <CheckCheck size={16} color="#ff751f" />
-                      <Text className="text-[#ff751f] text-sm font-medium">Read all</Text>
-                    </Pressable>
-                  )}
-                </View>
-              </View>
-            </View>
           }
           ListEmptyComponent={
             <View className="items-center py-12">

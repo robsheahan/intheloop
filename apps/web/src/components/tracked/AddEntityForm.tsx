@@ -17,10 +17,6 @@ const AUTOCOMPLETE_CATEGORIES = new Set([
   'github', 'steam', 'weather', 'currency',
 ]);
 
-const STRICT_AUTOCOMPLETE_CATEGORIES = new Set([
-  'crypto', 'stocks', 'currency', 'github',
-]);
-
 function isFieldVisible(field: CategoryField, metadata: Record<string, string>): boolean {
   if (!field.visibleWhen) return true;
   return metadata[field.visibleWhen.field] === field.visibleWhen.value;
@@ -33,7 +29,6 @@ interface Props {
 
 export function AddEntityForm({ category, onSuccess }: Props) {
   const config = CATEGORY_FORM_CONFIGS[category.slug];
-  const isStrict = STRICT_AUTOCOMPLETE_CATEGORIES.has(category.slug);
   const { profile } = useAuth();
   const hasCityField = config?.fields.some((f) => f.name === 'city');
   const prefillCity = hasCityField && profile?.default_city ? profile.default_city : '';
@@ -87,11 +82,6 @@ export function AddEntityForm({ category, onSuccess }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!entityName.trim()) return;
-
-    if (isStrict && !entitySelected) {
-      toast.error('Please select an item from the dropdown');
-      return;
-    }
 
     const parsedMetadata: Record<string, unknown> = {};
     for (const field of config.fields) {
@@ -172,7 +162,6 @@ export function AddEntityForm({ category, onSuccess }: Props) {
             onChange={setEntityName}
             placeholder={effectivePlaceholder}
             categorySlug={effectiveSearchSlug}
-            strict={isStrict}
             onSelectionChange={setEntitySelected}
             onSuggestionSelect={handleSuggestionSelect}
           />
@@ -196,7 +185,6 @@ export function AddEntityForm({ category, onSuccess }: Props) {
               }
               placeholder={field.placeholder}
               categorySlug={field.searchSlug}
-              strict={field.required}
               initialSelected={!!fieldSelected[field.name]}
               onSelectionChange={(selected) =>
                 setFieldSelected((prev) => ({ ...prev, [field.name]: selected }))

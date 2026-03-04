@@ -3,24 +3,16 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import { useCategories } from '@/lib/hooks/useCategories';
-import { useEmailPreferences, useToggleEmailPreference } from '@/lib/hooks/useEmailPreferences';
 import { Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { getCategoryIcon } from '@/lib/utils/categories';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 
 export default function SettingsPage() {
   const { profile, refreshProfile } = useAuth();
-  const { data: categories } = useCategories();
-  const { data: emailPrefs } = useEmailPreferences();
-  const toggleEmail = useToggleEmailPreference();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [defaultCity, setDefaultCity] = useState(profile?.default_city || '');
   const [citySelected, setCitySelected] = useState(!!profile?.default_city);
@@ -45,10 +37,6 @@ export default function SettingsPage() {
     setIsSaving(false);
   };
 
-  const getEmailEnabled = (catId: string) => {
-    return emailPrefs?.find((p) => p.category_id === catId)?.enabled ?? false;
-  };
-
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[oklch(0.38_0.10_250)] to-[oklch(0.30_0.08_250)] p-6 shadow-lg">
@@ -61,7 +49,7 @@ export default function SettingsPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Settings</h1>
             <p className="text-sm text-white/70">
-              Manage your account and notification preferences.
+              Manage your account preferences.
             </p>
           </div>
         </div>
@@ -105,35 +93,6 @@ export default function SettingsPage() {
               {isSaving ? 'Saving...' : 'Save changes'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Email Notifications</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Enable email alerts for categories you want notifications for.
-          </p>
-          <Separator />
-          {(categories || []).map((cat) => {
-            const Icon = getCategoryIcon(cat.slug);
-            return (
-              <div key={cat.id} className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-2">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{cat.name}</span>
-                </div>
-                <Switch
-                  checked={getEmailEnabled(cat.id)}
-                  onCheckedChange={(checked) =>
-                    toggleEmail.mutate({ categoryId: cat.id, enabled: checked })
-                  }
-                />
-              </div>
-            );
-          })}
         </CardContent>
       </Card>
     </div>

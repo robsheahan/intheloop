@@ -4,7 +4,6 @@ export type {
   Category,
   TrackedEntity,
   AlertHistory,
-  EmailPreference,
   CategoryOrder,
   PipelineRun,
 } from './types/database';

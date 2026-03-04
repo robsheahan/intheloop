@@ -14,12 +14,20 @@ async function getInstruments(): Promise<SearchSuggestion[]> {
   const instruments = data?.result?.data || [];
 
   cachedInstruments = instruments
-    .filter((i: Record<string, unknown>) => (i.quote_currency as string) === 'USDT' || (i.quote_currency as string) === 'USD')
-    .map((i: Record<string, unknown>) => ({
-      value: i.symbol as string,
-      label: i.symbol as string,
-      subtitle: `${i.base_currency}/${i.quote_currency}`,
-    }));
+    .filter((i: Record<string, unknown>) => {
+      const quote = (i.quote_ccy || i.quote_currency) as string;
+      return quote === 'USDT' || quote === 'USD';
+    })
+    .filter((i: Record<string, unknown>) => (i.inst_type as string) === 'CCY_PAIR')
+    .map((i: Record<string, unknown>) => {
+      const base = (i.base_ccy || i.base_currency) as string;
+      const quote = (i.quote_ccy || i.quote_currency) as string;
+      return {
+        value: base,
+        label: `${base}/${quote}`,
+        subtitle: i.display_name as string || `${base}/${quote}`,
+      };
+    });
 
   return cachedInstruments ?? [];
 }
@@ -27,5 +35,5 @@ async function getInstruments(): Promise<SearchSuggestion[]> {
 export async function searchCrypto(query: string): Promise<SearchSuggestion[]> {
   const all = await getInstruments();
   const q = query.toUpperCase();
-  return all.filter((s) => s.value.includes(q) || s.label.includes(q)).slice(0, 8);
+  return all.filter((s) => s.value.toUpperCase().includes(q) || s.label.toUpperCase().includes(q)).slice(0, 8);
 }

@@ -135,9 +135,31 @@ export const CATEGORY_FORM_CONFIGS: Record<string, CategoryFormConfig> = {
     fields: [],
   },
   podcasts: {
-    entityLabel: 'Person name',
-    entityPlaceholder: 'e.g. Elon Musk',
-    fields: [],
+    entityLabel: 'Name',
+    entityPlaceholder: 'e.g. The Joe Rogan Experience',
+    fields: [
+      {
+        name: 'track_mode',
+        label: 'What do you want to track?',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'A podcast show', value: 'show' },
+          { label: 'A guest on podcasts', value: 'guest' },
+        ],
+      },
+    ],
+    entityOverrides: {
+      'track_mode:show': {
+        entityLabel: 'Name',
+        entityPlaceholder: 'e.g. The Joe Rogan Experience',
+        searchSlug: 'podcasts',
+      },
+      'track_mode:guest': {
+        entityLabel: 'Name',
+        entityPlaceholder: 'e.g. Elon Musk',
+      },
+    },
   },
   weather: {
     entityLabel: 'City',

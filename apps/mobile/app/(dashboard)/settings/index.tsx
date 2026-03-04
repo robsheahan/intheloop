@@ -44,8 +44,8 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <ScrollView className="flex-1 px-4">
-        <View className="rounded-xl bg-[#2d4a7a] p-5 mt-4 mb-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
+      <View className="px-4 mt-4 mb-3">
+        <View className="rounded-xl bg-[#2d4a7a] p-5" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}>
           <View className="flex-row items-center gap-3">
             <View className="h-10 w-10 rounded-lg bg-white/10 items-center justify-center">
               <Settings size={22} color="#ff751f" />
@@ -58,7 +58,9 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+      </View>
 
+      <ScrollView className="flex-1 px-4">
         <Card className="mb-4">
           <CardHeader>
             <CardTitle>Profile</CardTitle>
