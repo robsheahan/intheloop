@@ -20,7 +20,7 @@ import { SearchSuggestion } from '@tmw/shared/search/types';
 
 const AUTOCOMPLETE_CATEGORIES = new Set([
   'music', 'tours', 'books', 'crypto', 'stocks', 'movies',
-  'github', 'steam', 'weather', 'currency', 'podcasts',
+  'github', 'steam', 'weather', 'currency',
 ]);
 
 export default function TrackedScreen() {

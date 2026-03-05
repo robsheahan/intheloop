@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
   Keyboard,
+  Dimensions,
 } from 'react-native';
 import { Input } from './Input';
 import { SearchSuggestion } from '@tmw/shared/search/types';
@@ -147,38 +148,51 @@ export function AutocompleteInput({
         )}
       </View>
       {isOpen && suggestions.length > 0 && (
-        <View
-          className="absolute left-0 right-0 bg-white border border-border rounded-lg shadow-lg"
-          style={{ top: '100%', marginTop: 4, zIndex: 50, maxHeight: 240 }}
-        >
-          <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-            {suggestions.map((item, i) => (
-              <Pressable
-                key={`${item.value}-${i}`}
-                onPress={() => handleSelect(item)}
-                className="flex-row items-center gap-2.5 px-3 py-2.5 border-b border-border/30 active:bg-gray-100"
-              >
-                {item.imageUrl && (
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    className="h-9 w-9 rounded"
-                    resizeMode="cover"
-                  />
-                )}
-                <View className="flex-1 min-w-0">
-                  <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
-                    {item.label}
-                  </Text>
-                  {item.subtitle && (
-                    <Text className="text-xs text-muted-foreground" numberOfLines={1}>
-                      {item.subtitle}
-                    </Text>
+        <>
+          <Pressable
+            style={{
+              position: 'absolute',
+              top: -1000,
+              left: -1000,
+              width: Dimensions.get('window').width + 2000,
+              height: Dimensions.get('window').height + 2000,
+              zIndex: 40,
+            }}
+            onPress={() => setIsOpen(false)}
+          />
+          <View
+            className="absolute left-0 right-0 bg-white border border-border rounded-lg shadow-lg"
+            style={{ top: '100%', marginTop: 4, zIndex: 50, maxHeight: 240 }}
+          >
+            <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+              {suggestions.map((item, i) => (
+                <Pressable
+                  key={`${item.value}-${i}`}
+                  onPress={() => handleSelect(item)}
+                  className="flex-row items-center gap-2.5 px-3 py-2.5 border-b border-border/30 active:bg-gray-100"
+                >
+                  {item.imageUrl && (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      className="h-9 w-9 rounded"
+                      resizeMode="cover"
+                    />
                   )}
-                </View>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
+                  <View className="flex-1 min-w-0">
+                    <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
+                      {item.label}
+                    </Text>
+                    {item.subtitle && (
+                      <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                        {item.subtitle}
+                      </Text>
+                    )}
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </>
       )}
     </View>
   );
