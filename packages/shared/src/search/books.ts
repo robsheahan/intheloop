@@ -7,6 +7,9 @@ export async function searchBooks(query: string): Promise<SearchSuggestion[]> {
     printType: 'books',
   });
 
+  const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
+  if (apiKey) params.set('key', apiKey);
+
   const res = await fetch(`https://www.googleapis.com/books/v1/volumes?${params}`, {
     signal: AbortSignal.timeout(8000),
   });
