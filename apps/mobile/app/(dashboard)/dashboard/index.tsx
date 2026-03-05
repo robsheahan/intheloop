@@ -10,7 +10,7 @@ import { useAlerts, useUnseenCounts, useMarkSeen, useMarkAllSeenGlobal } from '@
 import { useTrackedEntities, useAddTrackedEntity } from '@/hooks/useTrackedEntities';
 import { getCategoryIcon } from '@/lib/category-icons';
 import { getCategoryColor } from '@tmw/shared/utils/category-colors';
-import { CATEGORY_FORM_CONFIGS } from '@tmw/shared/utils/category-fields';
+import { CATEGORY_FORM_CONFIGS, qualifyEntityName } from '@tmw/shared/utils/category-fields';
 import { AlertCard } from '@/components/AlertCard';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -143,8 +143,9 @@ export default function DashboardScreen() {
     }
     if (fieldValues.tmdb_id) metadata.tmdb_id = parseInt(fieldValues.tmdb_id);
     if (fieldValues.media_type) metadata.media_type = fieldValues.media_type;
+    const finalName = qualifyEntityName(cat.slug, entityName.trim(), metadata);
     addEntity.mutate(
-      { categoryId: cat.id, entityName: entityName.trim(), entityMetadata: metadata },
+      { categoryId: cat.id, entityName: finalName, entityMetadata: metadata },
       {
         onSuccess: () => {
           setEntityName('');

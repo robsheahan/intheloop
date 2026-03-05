@@ -1,4 +1,5 @@
 import { PipelineContext, PipelineResult } from './types';
+import { baseEntityName } from '../utils/category-fields';
 
 const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -7,7 +8,7 @@ export async function checkWeather(ctx: PipelineContext): Promise<PipelineResult
   const results: PipelineResult[] = [];
 
   for (const entity of ctx.entities) {
-    const city = entity.entity_name;
+    const city = baseEntityName(entity.entity_name);
     const alertType = (entity.entity_metadata.alert_type as string) || 'temp_above';
     const threshold = parseFloat(entity.entity_metadata.threshold as string);
 

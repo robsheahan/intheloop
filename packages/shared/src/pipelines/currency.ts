@@ -1,4 +1,5 @@
 import { PipelineContext, PipelineResult } from './types';
+import { baseEntityName } from '../utils/category-fields';
 
 const FRANKFURTER_URL = 'https://api.frankfurter.app/latest';
 
@@ -6,7 +7,7 @@ export async function checkCurrency(ctx: PipelineContext): Promise<PipelineResul
   const results: PipelineResult[] = [];
 
   for (const entity of ctx.entities) {
-    const pair = entity.entity_name;
+    const pair = baseEntityName(entity.entity_name);
     const targetRate = parseFloat(entity.entity_metadata.target_rate as string);
     const direction = (entity.entity_metadata.direction as string) || 'above';
 
@@ -27,7 +28,7 @@ export async function checkCurrency(ctx: PipelineContext): Promise<PipelineResul
       if (!triggered) continue;
 
       const checkDate = new Date().toISOString().split('T')[0];
-      const dedupKey = `${pair}|${direction}|${checkDate}`;
+      const dedupKey = `${pair}|${direction}|${targetRate}|${checkDate}`;
 
       results.push({
         entity_name: pair,

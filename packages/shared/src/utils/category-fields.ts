@@ -205,3 +205,45 @@ export const CATEGORY_FORM_CONFIGS: Record<string, CategoryFormConfig> = {
     ],
   },
 };
+
+/**
+ * Strip the condition suffix added by qualifyEntityName to get the base name
+ * for API lookups. "BTC (below 60000)" → "BTC"
+ */
+export function baseEntityName(name: string): string {
+  const match = name.match(/^(.+?)\s*\((?:above|below|temp above|temp below|rain above|wind above)\s+.+\)$/);
+  return match ? match[1].trim() : name;
+}
+
+/**
+ * For categories with direction/threshold (crypto, stocks, currency, weather),
+ * append the condition to the entity name so multiple alerts for the same
+ * entity can coexist under the unique(user_id, category_id, entity_name) constraint.
+ */
+export function qualifyEntityName(
+  slug: string,
+  name: string,
+  metadata: Record<string, unknown>,
+): string {
+  switch (slug) {
+    case 'crypto':
+    case 'stocks':
+      if (metadata.direction && metadata.target_price) {
+        return `${name} (${metadata.direction} $${metadata.target_price})`;
+      }
+      return name;
+    case 'currency':
+      if (metadata.direction && metadata.target_rate) {
+        return `${name} (${metadata.direction} ${metadata.target_rate})`;
+      }
+      return name;
+    case 'weather':
+      if (metadata.alert_type && metadata.threshold) {
+        const label = String(metadata.alert_type).replace(/_/g, ' ');
+        return `${name} (${label} ${metadata.threshold})`;
+      }
+      return name;
+    default:
+      return name;
+  }
+}

@@ -1,4 +1,5 @@
 import { PipelineContext, PipelineResult } from './types';
+import { baseEntityName } from '../utils/category-fields';
 
 export async function checkStocks(ctx: PipelineContext): Promise<PipelineResult[]> {
   const results: PipelineResult[] = [];
@@ -6,11 +7,12 @@ export async function checkStocks(ctx: PipelineContext): Promise<PipelineResult[
   for (const entity of ctx.entities) {
     const targetPrice = parseFloat(entity.entity_metadata.target_price as string);
     const direction = (entity.entity_metadata.direction as string) || 'above';
+    const baseName = baseEntityName(entity.entity_name);
 
     if (isNaN(targetPrice)) continue;
 
     try {
-      const currentPrice = await fetchPrice(entity.entity_name);
+      const currentPrice = await fetchPrice(baseName);
       if (currentPrice === null) continue;
 
       const triggered =
@@ -20,7 +22,7 @@ export async function checkStocks(ctx: PipelineContext): Promise<PipelineResult[
       if (!triggered) continue;
 
       const checkDate = new Date().toISOString().split('T')[0];
-      const dedupKey = `${entity.entity_name}|${direction}|${checkDate}`;
+      const dedupKey = `${baseName}|${direction}|${targetPrice}|${checkDate}`;
 
       results.push({
         entity_name: entity.entity_name,
@@ -28,7 +30,7 @@ export async function checkStocks(ctx: PipelineContext): Promise<PipelineResult[
         dedup_key: dedupKey,
         content: {
           type: 'stocks',
-          symbol: entity.entity_name,
+          symbol: baseName,
           price: currentPrice,
           target_price: targetPrice,
           direction,

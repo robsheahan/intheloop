@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Category } from '@tmw/shared/types/database';
 import { useAddTrackedEntity } from '@/lib/hooks/useTrackedEntities';
-import { CATEGORY_FORM_CONFIGS, CategoryField } from '@tmw/shared/utils/category-fields';
+import { CATEGORY_FORM_CONFIGS, CategoryField, qualifyEntityName } from '@tmw/shared/utils/category-fields';
 import { AutocompleteInput } from '@/components/shared/AutocompleteInput';
 import { SearchSuggestion } from '@tmw/shared/search/types';
 import { useAuth } from '@/context/AuthContext';
@@ -110,12 +110,13 @@ export function AddEntityForm({ category, onSuccess }: Props) {
     if (metadata.media_type) parsedMetadata.media_type = metadata.media_type;
 
     try {
+      const finalName = qualifyEntityName(category.slug, entityName.trim(), parsedMetadata);
       await addEntity.mutateAsync({
         categoryId: category.id,
-        entityName: entityName.trim(),
+        entityName: finalName,
         entityMetadata: parsedMetadata,
       });
-      toast.success(`Added "${entityName.trim()}" to ${category.name}`);
+      toast.success(`Added "${finalName}" to ${category.name}`);
       setEntityName('');
       setMetadata({});
       setEntitySelected(false);
