@@ -5,33 +5,7 @@ import { getAllPipelineSlugs, getPipeline } from '@tmw/shared/pipelines';
 import { PipelineEntity } from '@tmw/shared/types/pipelines';
 import { sendPushNotifications } from '@/lib/push/send-notifications';
 
-export async function POST(request: NextRequest) {
-  // Auth: either cron secret or authenticated user
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  let triggeredBy = 'cron';
-
-  if (authHeader === `Bearer ${cronSecret}` && cronSecret) {
-    triggeredBy = 'cron';
-  } else if (authHeader?.startsWith('Bearer ')) {
-    // Mobile app: verify Supabase JWT token
-    const token = authHeader.slice(7);
-    const adminForAuth = createAdminClient();
-    const { data: { user }, error } = await adminForAuth.auth.getUser(token);
-    if (!user || error) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    triggeredBy = `user:${user.id}`;
-  } else {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    triggeredBy = `user:${user.id}`;
-  }
-
+async function runPipeline(triggeredBy: string) {
   const admin = createAdminClient();
 
   // Create pipeline run record
@@ -168,4 +142,46 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
+}
+
+export async function GET(request: NextRequest) {
+  // Vercel crons send GET requests with Authorization header
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return runPipeline('cron');
+}
+
+export async function POST(request: NextRequest) {
+  // Auth: either cron secret or authenticated user
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  let triggeredBy = 'cron';
+
+  if (authHeader === `Bearer ${cronSecret}` && cronSecret) {
+    triggeredBy = 'cron';
+  } else if (authHeader?.startsWith('Bearer ')) {
+    // Mobile app: verify Supabase JWT token
+    const token = authHeader.slice(7);
+    const adminForAuth = createAdminClient();
+    const { data: { user }, error } = await adminForAuth.auth.getUser(token);
+    if (!user || error) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    triggeredBy = `user:${user.id}`;
+  } else {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    triggeredBy = `user:${user.id}`;
+  }
+
+  return runPipeline(triggeredBy);
 }

@@ -1,19 +1,20 @@
 import { View, Text, Pressable, Linking } from 'react-native';
-import { Eye } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { AlertHistory } from '@tmw/shared/types/database';
 import { formatRelativeTime } from '@tmw/shared/utils/formatting';
 import { renderAlertTitle, renderAlertDescription } from '@tmw/shared/utils/alert-rendering';
 import { getCategoryColor } from '@tmw/shared/utils/category-colors';
+import { getServiceUrl } from '@tmw/shared/utils/service-links';
 import { getCategoryIcon } from '@/lib/category-icons';
-import { Badge } from '@/components/ui/Badge';
 
 interface Props {
   alert: AlertHistory;
   onMarkSeen?: (id: string) => void;
   showCategory?: boolean;
+  preferredService?: string | null;
 }
 
-export function AlertCard({ alert, onMarkSeen, showCategory = false }: Props) {
+export function AlertCard({ alert, onMarkSeen, showCategory = false, preferredService }: Props) {
   const content = alert.content;
   const type = content.type as string;
   const isUnseen = !alert.seen_at;
@@ -21,7 +22,7 @@ export function AlertCard({ alert, onMarkSeen, showCategory = false }: Props) {
   const Icon = getCategoryIcon(categorySlug);
   const color = getCategoryColor(categorySlug);
 
-  const url = typeof content.url === 'string' ? content.url : null;
+  const url = getServiceUrl(preferredService, content, type);
 
   return (
     <View
@@ -37,18 +38,14 @@ export function AlertCard({ alert, onMarkSeen, showCategory = false }: Props) {
           <Text className="font-medium text-sm text-foreground flex-1" numberOfLines={1}>
             {renderAlertTitle(content, type)}
           </Text>
-          {isUnseen && (
-            <Badge className="bg-primary">
-              <Text className="text-white text-[10px] font-medium">New</Text>
-            </Badge>
-          )}
         </View>
         {isUnseen && onMarkSeen && (
           <Pressable
             onPress={() => onMarkSeen(alert.id)}
-            className="p-1"
+            className="flex-row items-center gap-1 px-2 py-1 rounded-md bg-primary/10"
           >
-            <Eye size={14} color="#6b7280" />
+            <Check size={12} color="#ff751f" />
+            <Text className="text-[11px] text-primary font-medium">Dismiss</Text>
           </Pressable>
         )}
       </View>

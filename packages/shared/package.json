@@ -13,7 +13,8 @@
     "./utils/formatting": "./src/utils/formatting.ts",
     "./utils/category-fields": "./src/utils/category-fields.ts",
     "./utils/category-colors": "./src/utils/category-colors.ts",
-    "./utils/alert-rendering": "./src/utils/alert-rendering.ts"
+    "./utils/alert-rendering": "./src/utils/alert-rendering.ts",
+    "./utils/service-links": "./src/utils/service-links.ts"
   },
   "peerDependencies": {
     "react": ">=18"

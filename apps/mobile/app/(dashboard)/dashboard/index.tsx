@@ -26,7 +26,7 @@ import { supabase } from '@/lib/supabase/client';
 
 const AUTOCOMPLETE_CATEGORIES = new Set([
   'music', 'tours', 'books', 'crypto', 'stocks', 'movies',
-  'github', 'steam', 'weather', 'currency', 'podcasts',
+  'github', 'steam', 'weather', 'currency',
 ]);
 
 export default function DashboardScreen() {
@@ -311,6 +311,16 @@ export default function DashboardScreen() {
                         <Text className="text-white text-[10px] font-medium">{unseenAlerts.length}</Text>
                       </Badge>
                     </View>
+                    <Pressable
+                      onPress={() => {
+                        successNotification();
+                        markAllSeen.mutate();
+                      }}
+                      className="flex-row items-center gap-1 px-2 py-1 rounded-md bg-primary/10"
+                    >
+                      <CheckCheck size={14} color="#ff751f" />
+                      <Text className="text-xs text-primary font-medium">Dismiss all</Text>
+                    </Pressable>
                   </View>
                 </CardHeader>
                 <CardContent className="gap-2">
@@ -319,6 +329,7 @@ export default function DashboardScreen() {
                       key={a.id}
                       alert={a}
                       showCategory
+                      preferredService={profile?.preferred_service}
                       onMarkSeen={(id) => {
                         successNotification();
                         markSeen.mutate(id);
@@ -362,7 +373,7 @@ export default function DashboardScreen() {
                   <CardContent className="gap-2">
                     {catSeen.length > 0 ? (
                       catSeen.map((a) => (
-                        <AlertCard key={a.id} alert={a} />
+                        <AlertCard key={a.id} alert={a} preferredService={profile?.preferred_service} />
                       ))
                     ) : catUnseen.length === 0 ? (
                       <Text className="text-xs text-muted-foreground py-1">

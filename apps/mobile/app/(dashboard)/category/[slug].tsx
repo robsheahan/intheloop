@@ -2,14 +2,15 @@ import { useState, useCallback, useMemo } from 'react';
 import { View, Text, SectionList, Pressable, RefreshControl, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, CheckCheck, ExternalLink } from 'lucide-react-native';
+import { ArrowLeft, Check, CheckCheck, ExternalLink } from 'lucide-react-native';
 import { useCategories } from '@/hooks/useCategories';
+import { useAuth } from '@/context/AuthContext';
 import { successNotification } from '@/lib/haptics';
 import { useAlerts, useMarkSeen, useMarkAllSeen } from '@/hooks/useAlerts';
 import { getCategoryIcon } from '@/lib/category-icons';
 import { getCategoryColor } from '@tmw/shared/utils/category-colors';
+import { getServiceUrl } from '@tmw/shared/utils/service-links';
 import { AlertHistory } from '@tmw/shared/types/database';
-import { Badge } from '@/components/ui/Badge';
 import { AlertCardSkeleton } from '@/components/ui/Skeleton';
 
 /** Render title without the entity name (since it's shown as the group heading) */
@@ -99,6 +100,7 @@ interface Section {
 export default function CategoryDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
+  const { profile } = useAuth();
   const { data: categories } = useCategories();
   const { data: alerts, isLoading, refetch } = useAlerts(slug);
   const markSeen = useMarkSeen();
@@ -160,7 +162,7 @@ export default function CategoryDetailScreen() {
     const content = item.content;
     const type = content.type as string;
     const isUnseen = !item.seen_at;
-    const url = typeof content.url === 'string' ? content.url : null;
+    const url = getServiceUrl(profile?.preferred_service, content, type);
 
     return (
       <View
@@ -186,13 +188,15 @@ export default function CategoryDetailScreen() {
               </Pressable>
             )}
             {isUnseen && (
-              <Pressable onPress={() => {
-                successNotification();
-                markSeen.mutate(item.id);
-              }}>
-                <Badge className="bg-primary">
-                  <Text className="text-white text-[10px] font-medium">New</Text>
-                </Badge>
+              <Pressable
+                onPress={() => {
+                  successNotification();
+                  markSeen.mutate(item.id);
+                }}
+                className="flex-row items-center gap-1 px-2 py-1 rounded-md bg-primary/10"
+              >
+                <Check size={12} color="#ff751f" />
+                <Text className="text-[11px] text-primary font-medium">Dismiss</Text>
               </Pressable>
             )}
           </View>

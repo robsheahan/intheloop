@@ -8,14 +8,23 @@ import { supabase } from '@/lib/supabase/client';
 import { getCategoryIcon } from '@/lib/category-icons';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Switch } from '@/components/ui/Switch';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+
+const SERVICE_OPTIONS = [
+  { value: 'apple', label: 'Apple Music / Podcasts' },
+  { value: 'spotify', label: 'Spotify' },
+  { value: 'youtube_music', label: 'YouTube Music' },
+  { value: 'amazon_music', label: 'Amazon Music' },
+];
 
 export default function SettingsScreen() {
   const { profile, refreshProfile, signOut } = useAuth();
   const { data: categories } = useCategories();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [defaultCity, setDefaultCity] = useState(profile?.default_city || '');
+  const [preferredService, setPreferredService] = useState(profile?.preferred_service || 'apple');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleUpdateProfile = async () => {
@@ -23,7 +32,7 @@ export default function SettingsScreen() {
 
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName, default_city: defaultCity || null })
+      .update({ full_name: fullName, default_city: defaultCity || null, preferred_service: preferredService })
       .eq('id', profile!.id);
 
     if (error) {
@@ -83,6 +92,12 @@ export default function SettingsScreen() {
               value={defaultCity}
               onChangeText={setDefaultCity}
               placeholder="e.g. Melbourne"
+            />
+            <Select
+              label="Preferred music service"
+              value={preferredService}
+              options={SERVICE_OPTIONS}
+              onValueChange={setPreferredService}
             />
             <Button onPress={handleUpdateProfile} loading={isSaving}>
               Save changes
