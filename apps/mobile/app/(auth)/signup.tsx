@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase/client';
@@ -25,7 +25,7 @@ export default function SignupScreen() {
     setLoading(true);
     setError('');
 
-    const { error: authError } = await supabase.auth.signUp({
+    const { data, error: authError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
@@ -36,12 +36,11 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError.message);
       setLoading(false);
+    } else if (data.session) {
+      router.replace('/(dashboard)/dashboard');
     } else {
-      Alert.alert(
-        'Check your email',
-        'We sent you a confirmation link. Please confirm your email to continue.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
-      );
+      // Fallback if email confirmation is re-enabled
+      router.replace('/(auth)/login');
       setLoading(false);
     }
   };

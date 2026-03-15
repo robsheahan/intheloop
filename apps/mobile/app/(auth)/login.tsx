@@ -3,6 +3,7 @@ import { View, Text, KeyboardAvoidingView, Platform, ScrollView } from 'react-na
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/Logo';
@@ -10,6 +11,7 @@ import { OAuthButtons } from '@/components/auth/OAuthButtons';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { continueAsGuest } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -103,6 +105,12 @@ export default function LoginScreen() {
                   Forgot password?
                 </Text>
               </Link>
+            </View>
+
+            <View className="mt-4 border-t border-border pt-4">
+              <Button variant="ghost" onPress={continueAsGuest}>
+                Continue as Guest
+              </Button>
             </View>
           </View>
         </ScrollView>

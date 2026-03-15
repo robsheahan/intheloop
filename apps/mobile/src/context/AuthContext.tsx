@@ -10,13 +10,15 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   isLoading: boolean;
+  isGuest: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  continueAsGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function useProtectedRoute(user: User | null, isLoading: boolean) {
+function useProtectedRoute(user: User | null, isLoading: boolean, isGuest: boolean) {
   const segments = useSegments();
   const router = useRouter();
 
@@ -26,12 +28,14 @@ function useProtectedRoute(user: User | null, isLoading: boolean) {
     const inAuthGroup = segments[0] === '(auth)';
     const inDashboardGroup = segments[0] === '(dashboard)';
 
-    if (!user && !inAuthGroup) {
+    if (!user && !isGuest && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (user && !inDashboardGroup) {
       router.replace('/(dashboard)/dashboard');
+    } else if (isGuest && !user && !inAuthGroup && !inDashboardGroup) {
+      router.replace('/(dashboard)/dashboard');
     }
-  }, [user, segments, isLoading]);
+  }, [user, segments, isLoading, isGuest]);
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -39,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
   const router = useRouter();
   const pushRegistered = useRef(false);
 
@@ -109,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          setIsGuest(false);
           await fetchProfile(session.user.id);
         } else {
           setProfile(null);
@@ -125,12 +131,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  useProtectedRoute(user, isLoading);
+  useProtectedRoute(user, isLoading, isGuest);
+
+  const continueAsGuest = () => {
+    setIsGuest(true);
+  };
 
   const signOut = async () => {
     setUser(null);
     setProfile(null);
     setSession(null);
+    setIsGuest(false);
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Failed to sign out:', error);
@@ -144,8 +155,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile,
         session,
         isLoading,
+        isGuest,
         signOut,
         refreshProfile,
+        continueAsGuest,
       }}
     >
       {children}

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, RefreshControl, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Trash2, Plus, ChevronDown, ChevronUp, Radar } from 'lucide-react-native';
 import { useOrderedCategories } from '@/hooks/useOrderedCategories';
@@ -24,7 +25,8 @@ const AUTOCOMPLETE_CATEGORIES = new Set([
 ]);
 
 export default function TrackedScreen() {
-  const { profile } = useAuth();
+  const { profile, isGuest } = useAuth();
+  const router = useRouter();
   const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: allEntities, isLoading: entitiesLoading, refetch: refetchEntities } = useTrackedEntities();
   const addEntity = useAddTrackedEntity();
@@ -377,6 +379,42 @@ export default function TrackedScreen() {
         </View>
       </View>
 
+      {isGuest ? (
+        <ScrollView className="flex-1 px-4">
+          <View className="gap-3 pb-8">
+            <Card>
+              <CardContent>
+                <View className="items-center py-4">
+                  <Text className="text-sm text-muted-foreground text-center mb-3">
+                    Create an account to start tracking items and receiving personalized alerts.
+                  </Text>
+                  <View className="flex-row gap-3 w-full">
+                    <Button onPress={() => router.replace('/(auth)/signup')} className="flex-1">
+                      Sign Up
+                    </Button>
+                    <Button variant="outline" onPress={() => router.replace('/(auth)/login')} className="flex-1">
+                      Sign In
+                    </Button>
+                  </View>
+                </View>
+              </CardContent>
+            </Card>
+            <Text className="text-sm font-medium text-muted-foreground">Available categories</Text>
+            {(categories || []).map((cat) => {
+              const Icon = getCategoryIcon(cat.slug);
+              const color = getCategoryColor(cat.slug);
+              return (
+                <Card key={cat.id}>
+                  <Pressable className="flex-row items-center gap-2">
+                    <Icon size={18} color={color} />
+                    <CardTitle>{cat.name}</CardTitle>
+                  </Pressable>
+                </Card>
+              );
+            })}
+          </View>
+        </ScrollView>
+      ) : (
       <ScrollView
         ref={scrollViewRef}
         className="flex-1 px-4"
@@ -408,6 +446,7 @@ export default function TrackedScreen() {
           </View>
         )}
       </ScrollView>
+      )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

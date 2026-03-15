@@ -1,16 +1,22 @@
 import { useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
 import { useAlertHistory, useMarkSeen } from '@/hooks/useAlerts';
 import { successNotification } from '@/lib/haptics';
 import { AlertCard } from '@/components/AlertCard';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent } from '@/components/ui/Card';
 import { AlertHistory } from '@tmw/shared/types/database';
 import { AlertCardSkeleton } from '@/components/ui/Skeleton';
 
 const PAGE_SIZE = 30;
 
 export default function HistoryScreen() {
+  const router = useRouter();
+  const { isGuest } = useAuth();
   const [page, setPage] = useState(0);
   const { data, isLoading, refetch } = useAlertHistory(page, PAGE_SIZE);
   const markSeen = useMarkSeen();
@@ -59,7 +65,27 @@ export default function HistoryScreen() {
         </View>
       </View>
 
-      {isLoading && !data ? (
+      {isGuest ? (
+        <View className="px-4">
+          <Card>
+            <CardContent>
+              <View className="items-center py-8">
+                <Text className="text-muted-foreground text-center mb-3">
+                  Create an account to view your alert history.
+                </Text>
+                <View className="flex-row gap-3 w-full">
+                  <Button onPress={() => router.replace('/(auth)/signup')} className="flex-1">
+                    Sign Up
+                  </Button>
+                  <Button variant="outline" onPress={() => router.replace('/(auth)/login')} className="flex-1">
+                    Sign In
+                  </Button>
+                </View>
+              </View>
+            </CardContent>
+          </Card>
+        </View>
+      ) : isLoading && !data ? (
         <View className="px-4 gap-2 mt-2">
           {[1, 2, 3, 4, 5].map((i) => (
             <AlertCardSkeleton key={i} />

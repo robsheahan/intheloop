@@ -31,7 +31,7 @@ const AUTOCOMPLETE_CATEGORIES = new Set([
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { profile } = useAuth();
+  const { profile, user, isGuest } = useAuth();
   const { data: categories, isLoading: catLoading } = useOrderedCategories();
   const { data: alerts, isLoading: alertsLoading, refetch: refetchAlerts } = useAlerts(undefined, false, 50);
   const { data: unseenCounts, refetch: refetchUnseen } = useUnseenCounts();
@@ -226,16 +226,18 @@ export default function DashboardScreen() {
               </View>
               <View>
                 <Text className="text-xl font-bold text-white">
-                  {profile?.full_name ? `Hi, ${profile.full_name.split(' ')[0]}` : 'Dashboard'}
+                  {isGuest ? 'Welcome' : profile?.full_name ? `Hi, ${profile.full_name.split(' ')[0]}` : 'Dashboard'}
                 </Text>
                 <Text className="text-sm text-white/70">
-                  {totalUnseen > 0
+                  {isGuest
+                    ? 'Browsing as guest'
+                    : totalUnseen > 0
                     ? `${totalUnseen} new alert${totalUnseen !== 1 ? 's' : ''}`
                     : 'You\u2019re all caught up.'}
                 </Text>
               </View>
             </View>
-            {totalUnseen > 0 && (
+            {!isGuest && totalUnseen > 0 && (
               <Pressable
                 onPress={() => {
                   successNotification();
@@ -250,29 +252,31 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        <Pressable
-          onPress={handleSearchAlerts}
-          disabled={isRunning}
-          className="flex-row items-center justify-center gap-2 mt-3 py-3 rounded-xl"
-          style={{
-            backgroundColor: isRunning ? '#cc5e19' : '#ff751f',
-            shadowColor: '#ff751f',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 4,
-            opacity: isRunning ? 0.8 : 1,
-          }}
-        >
-          {isRunning ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <RefreshCw size={18} color="#fff" />
-          )}
-          <Text className="text-white font-semibold text-base">
-            {isRunning ? 'Searching...' : 'Search new alerts'}
-          </Text>
-        </Pressable>
+        {!isGuest && (
+          <Pressable
+            onPress={handleSearchAlerts}
+            disabled={isRunning}
+            className="flex-row items-center justify-center gap-2 mt-3 py-3 rounded-xl"
+            style={{
+              backgroundColor: isRunning ? '#cc5e19' : '#ff751f',
+              shadowColor: '#ff751f',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 6,
+              elevation: 4,
+              opacity: isRunning ? 0.8 : 1,
+            }}
+          >
+            {isRunning ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <RefreshCw size={18} color="#fff" />
+            )}
+            <Text className="text-white font-semibold text-base">
+              {isRunning ? 'Searching...' : 'Search new alerts'}
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       <ScrollView
@@ -286,7 +290,49 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ff751f" />
         }
       >
-        {isLoading ? (
+        {isGuest ? (
+          <View className="gap-4 pb-8">
+            <Card>
+              <CardContent>
+                <View className="items-center py-6">
+                  <Text className="text-base font-semibold text-foreground mb-2">
+                    Get alerts for what matters to you
+                  </Text>
+                  <Text className="text-sm text-muted-foreground text-center mb-4">
+                    Track movies, music, stocks, weather, and more. Create a free account to start receiving personalized alerts.
+                  </Text>
+                  <View className="flex-row gap-3">
+                    <Button onPress={() => router.replace('/(auth)/signup')} className="flex-1">
+                      Sign Up
+                    </Button>
+                    <Button variant="outline" onPress={() => router.replace('/(auth)/login')} className="flex-1">
+                      Sign In
+                    </Button>
+                  </View>
+                </View>
+              </CardContent>
+            </Card>
+            {(categories || []).map((cat: Category) => {
+              const Icon = getCategoryIcon(cat.slug);
+              const color = getCategoryColor(cat.slug);
+              return (
+                <Card key={cat.id}>
+                  <CardHeader className="mb-0">
+                    <View className="flex-row items-center gap-2">
+                      <Icon size={16} color={color} />
+                      <Text className="text-base font-semibold text-foreground">{cat.name}</Text>
+                    </View>
+                  </CardHeader>
+                  <CardContent>
+                    <Text className="text-xs text-muted-foreground">
+                      Track and get alerts for {cat.name.toLowerCase()}.
+                    </Text>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </View>
+        ) : isLoading ? (
           <DashboardSkeleton />
         ) : activeCategories.length === 0 ? (
           <Card>

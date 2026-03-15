@@ -32,7 +32,10 @@ export async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
 
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+  const projectId =
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId ??
+    '3bc809b9-daf6-4199-9a8d-4d6c3f5fa469';
   const tokenData = await Notifications.getExpoPushTokenAsync({
     projectId,
   });
