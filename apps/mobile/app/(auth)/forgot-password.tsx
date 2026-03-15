@@ -22,8 +22,10 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     setError('');
 
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
     const { error: authError } = await supabase.auth.resetPasswordForEmail(
-      email.trim()
+      email.trim(),
+      { redirectTo: `${apiUrl}/auth/callback?next=/reset-password` }
     );
 
     setLoading(false);
